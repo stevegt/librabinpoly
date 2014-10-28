@@ -1,6 +1,7 @@
 // $Id$
 
 /* 
+ * Copyright (C) 2014 Steve Traugott (stevegt@t7a.org)
  * Copyright (C) 2013 Pavan Kumar Alampalli (pavankumar@cmu.edu)
  * Copyright (C) 2004 Hyang-Ah Kim (hakim@cs.cmu.edu)
  * Copyright (C) 2000 David Mazieres (dm@uun.org)
@@ -27,7 +28,6 @@
 
 #include <sys/types.h>
 #include <string.h>
-#include "dedup.h"
 
 struct rabinpoly {
 	u_int64_t poly;					// Actual polynomial
@@ -48,5 +48,7 @@ struct rabinpoly {
 	u_int64_t T[256];		// Lookup table for mod
 	u_int64_t U[256];
 };
+typedef struct rabinpoly rabinpoly_t;
+
 
 #endif /* !_RABINPOLY_H_ */
