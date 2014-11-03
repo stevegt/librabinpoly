@@ -19,6 +19,10 @@ test: $(SO)
 	test/test_load.py
 	test/test_next.py
 	test/test_reset.py
+	test/test_zeros.py
+
+benchmark: $(SO)
+	test/benchmark.py /tmp/foo1
 
 $(SO): $(OBJECTS)
 	gcc -shared -fPIC -Wl,-soname,$(SO) -o $(SO) $(OBJECTS) -lc
