@@ -18,6 +18,7 @@ all: test
 test: $(SO)
 	test/test_load.py
 	test/test_zeros.py
+	test/test_ones.py
 	test/test_next.py
 	test/test_reset.py
 

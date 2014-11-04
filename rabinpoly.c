@@ -1,6 +1,7 @@
 // $Id$
 
 /*
+ * Copyright (C) 2014 Steve Traugott (stevegt@t7a.org)
  * Copyright (C) 2013 Pavan Kumar Alampalli (pavankumar@cmu.edu)
  * Copyright (C) 2004 Hyang-Ah Kim (hakim@cs.cmu.edu)
  * Copyright (C) 1999 David Mazieres (dm@uun.org)
@@ -216,8 +217,9 @@ rabinpoly_t *rabin_init(unsigned int window_size,
 	rp->avg_segment_size = avg_segment_size;
 	rp->min_segment_size = min_segment_size;
 	rp->max_segment_size = max_segment_size;
-	// rp->fingerprint_mask = (1 << (fls32(rp->avg_segment_size)-1))-1;
 	rp->fingerprint_mask = (1 << (fls32(rp->avg_segment_size)-1))-1;
+
+    // XXX
     #include <stdio.h>
     printf("flsout %d\n", fls32(rp->avg_segment_size));
     printf("preshift %d\n", fls32(rp->avg_segment_size)-1);
@@ -286,7 +288,7 @@ int rabin_segment_next(rabinpoly_t *rp,
      * http://gsoc.cat-v.org/people/mjl/blog/2007/08/06/1_Rabin_fingerprints/ 
      *
      * */
-    unsigned int test_value = rp->avg_segment_size - 1;
+    // unsigned int test_value = rp->avg_segment_size - 1;   XXX
 
 	for (i = 0; i < bytes; i++) {
 		slide8(rp, buf[i]);
@@ -296,11 +298,12 @@ int rabin_segment_next(rabinpoly_t *rp,
 			continue;
 		}
 
-		if(((rp->fingerprint & rp->fingerprint_mask) == test_value) 
+		// if(((rp->fingerprint & rp->fingerprint_mask) == test_value)  XXX
+		if(((rp->fingerprint & rp->fingerprint_mask) == rp->fingerprint_mask) 
 				|| (rp->cur_seg_size == rp->max_segment_size)) {
 			*is_new_segment = 1;
 			rp->cur_seg_size = 0;
-            printf("%x\n", rp->fingerprint);
+            printf("%x\n", rp->fingerprint); // XXX
 			return i+1;
 		}
 	}
