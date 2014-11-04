@@ -36,7 +36,7 @@ bs = cast(buf_start + start, c_ubyte_p)
 print bs
 count = lib.rabin_segment_next(rp, bs, buf_size, is_new_segment)
 print count, is_new_segment.value
-assert count == 9294
+assert count == 15848
 assert is_new_segment.value == 1
 start += count
 
@@ -44,7 +44,7 @@ bs = cast(buf_start + start, c_ubyte_p)
 print bs
 count = lib.rabin_segment_next(rp, bs, buf_size-start, is_new_segment)
 print count, is_new_segment.value
-assert count == 22416
+assert count == 1132
 assert is_new_segment.value == 1
 start += count
 
@@ -62,18 +62,18 @@ bs = cast(buf_start + start, c_ubyte_p)
 print bs
 count = lib.rabin_segment_next(rp, bs, buf_size-start, is_new_segment)
 print count, is_new_segment.value
-assert count == 3315
+assert count == 5718
 assert is_new_segment.value == 1
 start += count
 
 # reset
-start -= 3325
+start -= 5728
 lib.rabin_reset(rp)
 bs = cast(buf_start + start, c_ubyte_p)
 print bs
 count = lib.rabin_segment_next(rp, bs, buf_size-start, is_new_segment)
 print count, is_new_segment.value
-assert count == 3325
+assert count == 5728
 assert is_new_segment.value == 1
 start += count
 

@@ -45,30 +45,30 @@ def rnext(start, size, tcount, tseg):
 	return count
 
 start = 0
-count = rnext(start, buf_size, 9294, 1)
+count = rnext(start, buf_size, 15848, 1)
 start += count
 
-count = rnext(start, buf_size-start, 22416, 1)
+count = rnext(start, buf_size-start, 1132, 1)
 start += count
 
 # short read
 count = rnext(start, 10, 10, 0)
 
 # reread
-count = rnext(start, buf_size-start, 3325, 1)
+count = rnext(start, buf_size-start, 5728, 1)
 start += count
 
 # continue
-count = rnext(start, buf_size-start, 4376, 1)
+count = rnext(start, buf_size-start, 10064, 1)
 start += count
 
 # relocate
 lib.rabin_reset(rp)
 dst = buf_start
-src = buf_start + 9294
-count = 22416
+src = buf_start + 15848
+count = 1132
 memmove(dst, src, count)
-count = rnext(0, buf_size, 22416, 1)
+count = rnext(0, buf_size, 1132, 1)
 start += count
 
 # run it out
@@ -89,6 +89,6 @@ while True:
 		break
 	i += 1
 print i
-assert i == 11
+assert i == 18
 
 lib.rabin_free(byref(rp))

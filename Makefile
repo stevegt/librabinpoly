@@ -17,9 +17,9 @@ all: test
 	
 test: $(SO)
 	test/test_load.py
+	test/test_zeros.py
 	test/test_next.py
 	test/test_reset.py
-	test/test_zeros.py
 
 benchmark: $(SO)
 	test/benchmark.py /tmp/foo1
