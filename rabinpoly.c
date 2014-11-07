@@ -219,14 +219,6 @@ rabinpoly_t *rabin_init(unsigned int window_size,
 	rp->max_segment_size = max_segment_size;
 	rp->fingerprint_mask = (1 << (fls32(rp->avg_segment_size)-1))-1;
 
-    /* XXX
-    #include <stdio.h>
-    printf("flsout %d\n", fls32(rp->avg_segment_size));
-    printf("preshift %d\n", fls32(rp->avg_segment_size)-1);
-    printf("postshift %d\n", 1 << (fls32(rp->avg_segment_size)-1));
-    printf("mask %x\n", rp->fingerprint_mask);
-    */
-
 	rp->fingerprint = 0;
 	rp->bufpos = -1;
 	rp->cur_seg_size = 0;
@@ -280,16 +272,21 @@ unsigned long rabin_segment_next(rabinpoly_t *rp,
 
 	*is_new_segment = 0;
 
-    /* We set test_value to something other than zero in order to
-     * avoid generating short segments when scanning long strings of
-     * zeroes.  Mechiel Lukkien (mjl), while working on the Plan9
-     * gsoc, seemed to think that avg_segment_size - 1 was a good
-     * value:
+    /* We compare the low-order fingerprint bits (LOFB) to something
+     * other than zero in order to avoid generating short segments
+     * when scanning long strings of zeroes.  Mechiel Lukkien (mjl),
+     * while working on the Plan9 gsoc, seemed to think that
+     * avg_segment_size - 1 was a good value:
      *
      * http://gsoc.cat-v.org/people/mjl/blog/2007/08/06/1_Rabin_fingerprints/ 
      *
+     * ...and since we're already using avg_segment_size - 1 to set
+     * the fingerprint mask itself, then simply comparing LOFB to the
+     * mask itself will do the right thing.  And because we're only
+     * interested in those cases where LOFB is all ones, we can simply
+     * xor LOFB with the mask.
+     *
      * */
-    // unsigned int test_value = rp->avg_segment_size - 1;   XXX
 
 	for (i = 0; i < bytes; i++) {
 		slide8(rp, buf[i]);
