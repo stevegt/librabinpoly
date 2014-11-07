@@ -17,9 +17,9 @@ fread = libc.fread
 fread.argtypes = [c_void_p, c_size_t, c_size_t, c_void_p]
 
 window_size = 32
-min_segment_size = 1024
-avg_segment_size = 8192
-max_segment_size = 65536
+min_segment_size = 2**14
+avg_segment_size = 2**15
+max_segment_size = 2**16
 buf_size = 128*1024
 c_ubyte_p = POINTER(c_ubyte)
 

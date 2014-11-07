@@ -32,10 +32,11 @@ i = 0
 while True:
 	bs = cast(buf_start + start, c_ubyte_p)
 	count = lib.rabin_segment_next(rp, bs, buf_size-start, is_new_segment)
+	print start, count, is_new_segment.value, 
 	assert count == 65536
 	h = hashlib.md5(buf[start:start+count]).hexdigest() 
 	assert h == 'fcd6bcb56c1689fcef28b57c22475bad'
-	print start, count, is_new_segment.value, h
+	print h
 	start += count
 	assert start <= buf_size
 	if start == buf_size:

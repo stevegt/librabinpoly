@@ -8,7 +8,7 @@ History
 
 (Please send me pull requests for any corrections or additional
 information anyone wants to add here.  I want to set the record
-straight, but also think that understanding the history helps with
+straight, and also think that understanding the history helps with
 understanding the code.)
 
 It all started with Michael O. Rabin's 1981 paper "Fingerprinting by
