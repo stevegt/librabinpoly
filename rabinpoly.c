@@ -270,6 +270,27 @@ unsigned long rabin_segment_next(rabinpoly_t *rp,
 		return -1;
 	}
 
+    /* 
+     * Skip early part of each block -- there appears to be no reason
+     * to checksum the first min_segment_size-N bytes, because the
+     * effect of those early bytes gets flushed out pretty quickly.
+     * Setting N to 256 seems to work; not sure if that's the "right"
+     * number, but we'll use that for now.  This one optimization
+     * alone provides a 30% speedup in benchmark.py though, with no
+     * detected change in block boundary locations or fingerprints in
+     * any of the existing tests.  - stevegt
+     *
+     * @moinakg also seems to think 256 is right:
+     * https://moinakg.wordpress.com/tag/rolling-hash/
+     *
+     */
+
+	unsigned long skip = 0;
+	if (*is_new_segment && (bytes > rp->min_segment_size) && (rp->min_segment_size > 512)) {
+		skip = rp->min_segment_size - 256;
+		rp->cur_seg_size += skip;
+	}
+
 	*is_new_segment = 0;
 
     /* We compare the low-order fingerprint bits (LOFB) to something
@@ -288,7 +309,7 @@ unsigned long rabin_segment_next(rabinpoly_t *rp,
      *
      * */
 
-	for (i = 0; i < bytes; i++) {
+	for (i = skip; i < bytes; i++) {
 		slide8(rp, buf[i]);
 		rp->cur_seg_size++;
 
@@ -300,6 +321,7 @@ unsigned long rabin_segment_next(rabinpoly_t *rp,
 				|| (rp->cur_seg_size == rp->max_segment_size)) {
 			*is_new_segment = 1;
 			rp->cur_seg_size = 0;
+            // printf("fingerprint %x\n", rp->fingerprint);
 			return i+1;
 		}
 	}
