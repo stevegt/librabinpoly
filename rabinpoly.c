@@ -219,12 +219,13 @@ rabinpoly_t *rabin_init(unsigned int window_size,
 	rp->max_segment_size = max_segment_size;
 	rp->fingerprint_mask = (1 << (fls32(rp->avg_segment_size)-1))-1;
 
-    // XXX
+    /* XXX
     #include <stdio.h>
     printf("flsout %d\n", fls32(rp->avg_segment_size));
     printf("preshift %d\n", fls32(rp->avg_segment_size)-1);
     printf("postshift %d\n", 1 << (fls32(rp->avg_segment_size)-1));
     printf("mask %x\n", rp->fingerprint_mask);
+    */
 
 	rp->fingerprint = 0;
 	rp->bufpos = -1;
@@ -298,12 +299,10 @@ unsigned long rabin_segment_next(rabinpoly_t *rp,
 			continue;
 		}
 
-		// if(((rp->fingerprint & rp->fingerprint_mask) == test_value)  XXX
-		if(((rp->fingerprint & rp->fingerprint_mask) == rp->fingerprint_mask) 
+		if( !((rp->fingerprint & rp->fingerprint_mask) ^ rp->fingerprint_mask) 
 				|| (rp->cur_seg_size == rp->max_segment_size)) {
 			*is_new_segment = 1;
 			rp->cur_seg_size = 0;
-            printf("%x\n", rp->fingerprint); // XXX
 			return i+1;
 		}
 	}
