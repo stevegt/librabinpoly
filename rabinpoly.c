@@ -280,8 +280,8 @@ unsigned long rabin_segment_next(rabinpoly_t *rp,
      * detected change in block boundary locations or fingerprints in
      * any of the existing tests.  - stevegt
      *
-     * @moinakg also seems to think 256 is right:
-     * https://moinakg.wordpress.com/tag/rolling-hash/
+     * @moinakg found similar results, and also seems to think 256 is
+     * right: https://moinakg.wordpress.com/tag/rolling-hash/
      *
      */
 
