@@ -32,17 +32,16 @@
 struct rabinpoly {
 	u_int64_t poly;					// Actual polynomial
 	unsigned int window_size;		// in bytes
-	unsigned int avg_segment_size;	// in KB
-	unsigned int min_segment_size;	// in KB
-	unsigned int max_segment_size;	// in KB
-
+	unsigned long avg_segment_size;	    // in bytes
+	unsigned long min_segment_size;	    // in bytes
+	unsigned long max_segment_size;	    // in bytes
+	unsigned long cur_seg_size;	        // tracks size of the current active segment 
 
 	u_int64_t fingerprint;		// current rabin fingerprint
 	u_int64_t fingerprint_mask;	// to check if we are at segment boundary
 
 	u_char *buf;				// circular buffer of size 'window_size'
 	unsigned int bufpos;		// current position in ciruclar buffer
-	unsigned int cur_seg_size;	// tracks size of the current active segment 
 
   	int shift;
 	u_int64_t T[256];		// Lookup table for mod

@@ -177,13 +177,13 @@ static u_int64_t append8(rabinpoly_t *rp, u_int64_t p, u_char m)
  *              [input] Rabin fingerprint window size in bytes.  
  *                      Suitable values range from 32 to 128.
  * avg_segment_size 
- *              [input] Average segment size in KB
+ *              [input] Average segment size in bytes
  *
  * min_segment_size 
- *              [input] Minimum segment size in KB
+ *              [input] Minimum segment size in bytes
  *
  * max_segment_size 
- *              [input] Maximum segment size in KB
+ *              [input] Maximum segment size in bytes
  *
  * Return values:
  *
@@ -194,9 +194,9 @@ static u_int64_t append8(rabinpoly_t *rp, u_int64_t p, u_char m)
  *              Either malloc or arg error XXX need better error codes
  */
 rabinpoly_t *rabin_init(unsigned int window_size,
-						unsigned int avg_segment_size, 
-						unsigned int min_segment_size,
-						unsigned int max_segment_size)
+						unsigned long avg_segment_size, 
+						unsigned long min_segment_size,
+						unsigned long max_segment_size)
 {
 	rabinpoly_t *rp;
 
@@ -266,12 +266,12 @@ rabinpoly_t *rabin_init(unsigned int window_size,
  *
  * XXX
  */
-int rabin_segment_next(rabinpoly_t *rp, 
+unsigned long rabin_segment_next(rabinpoly_t *rp, 
 						const char *buf, 
-						unsigned int bytes,
+						unsigned long bytes,
 						int *is_new_segment)
 {
-	unsigned int i;
+	unsigned long i;
 
 	if (!rp || !buf || !is_new_segment) {
 		return -1;
