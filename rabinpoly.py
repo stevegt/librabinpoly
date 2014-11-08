@@ -32,3 +32,10 @@ lib.rabin_segment_next.restype = c_ulong
 lib.rabin_reset.argtypes = [POINTER(Rabinpoly_t)]
 
 lib.rabin_free.argtypes = [POINTER(POINTER(Rabinpoly_t))]
+
+cbfunc_t = CFUNCTYPE(c_int, POINTER(Rabinpoly_t), POINTER(c_ubyte), c_ulong, c_int)
+
+lib.rabin_write.argtypes = [
+        POINTER(Rabinpoly_t), POINTER(c_ubyte), c_ulong, c_int, cbfunc_t]
+lib.rabin_write.restype = c_ulong
+

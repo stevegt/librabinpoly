@@ -347,3 +347,53 @@ void rabin_free(rabinpoly_t **p_rp)
 	*p_rp = NULL;
 }
 
+
+int rabin_callback(
+        rabinpoly_t *rp, const char *buf, unsigned long size, int is_eof) {
+    printf("hello from the callback! %d\n", size);
+    return 0;
+}
+
+unsigned long rabin_write(
+        rabinpoly_t *rp, const char *buf, unsigned long size, int is_eof, 
+        int (*callback)(rabinpoly_t *, const char *, unsigned long, int)) {
+
+	unsigned long written = 0;
+    unsigned long hashed = 0;
+    const char *hash_buf;
+    unsigned long hash_size = 0;
+    int is_new_segment = 0;
+
+	if (!rp || !buf) {
+		return -1;
+	}
+
+    hash_buf = buf;
+
+	for (;;) {
+        // printf("%lx %ld %d: ", hash_buf, hash_size, is_new_segment);
+        hashed = rabin_segment_next(rp, hash_buf, hash_size, &is_new_segment);
+        written += hashed;
+        hash_size = size - written;
+        // printf("%ld %ld %d %d\n", hashed, written, is_new_segment, is_eof);
+
+        if (is_new_segment || ((written >= size) && is_eof)) {
+            int rc;
+            rc = callback(rp, hash_buf, hashed, (written >= size) && is_eof);
+            // printf("got %d back\n", rc);
+            if (rc) {
+                written -= hashed;
+                return written;
+            }
+        }
+        hash_buf += hashed;
+
+        if (written >= size) {
+            break;
+        }
+    }
+
+    return written;
+}
+
+

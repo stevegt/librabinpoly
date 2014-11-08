@@ -23,6 +23,7 @@ test: $(SO)
 	test/test_next.py
 	test/test_reset.py
 	test/test_16_32_64.py
+	test/test_write.py
 
 $(BENCHFN): 
 	dd if=/dev/urandom of=$(BENCHFN) bs=1M count=10
