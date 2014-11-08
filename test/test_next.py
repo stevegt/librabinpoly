@@ -36,7 +36,6 @@ for i in range(buf_size):
 
 def rnext(start, size, tcount, tseg):
 	bs = cast(buf_start + start, c_ubyte_p)
-	print bs
 	count = lib.rabin_segment_next(rp, bs, size, is_new_segment)
 	h = hashlib.md5(buf[start:start+count]).hexdigest() 
 	print start, count, is_new_segment.value, h
