@@ -1,6 +1,6 @@
 CFLAGS=-Wall -fPIC
 LDFLAGS=-L.
-LIBS=-lcrypto -lssl
+# LIBS=-lcrypto -lssl
 OBJECTS=rabinpoly.o msb.o
 SO=librabinpoly.so.0
 BENCHFN=/tmp/rabin-benchmark.test
