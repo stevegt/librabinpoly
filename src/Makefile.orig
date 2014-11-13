@@ -5,7 +5,7 @@ OBJECTS=rabinpoly.o msb.o
 SO=librabinpoly.so.0
 BENCHFN=/tmp/rabin-benchmark.test
 
-export LD_LIBRARY_PATH := =$(CURDIR):$(LD_LIBRARY_PATH)
+export LD_LIBRARY_PATH := $(CURDIR):$(LD_LIBRARY_PATH)
 export PYTHONPATH := $(CURDIR):$(PYTHONPATH)
 
 ifdef DEBUG

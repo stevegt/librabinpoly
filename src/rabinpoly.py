@@ -1,5 +1,8 @@
 from ctypes import *
 
+import os
+print os.environ['LD_LIBRARY_PATH']
+
 class Rabinpoly_t(Structure):
 	_fields_ = [
 		("poly", c_ulonglong),  # Actual polynomial
