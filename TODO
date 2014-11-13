@@ -1,0 +1,6 @@
+- pip install rabinpoly
+- client
+- daemon
+- kv store
+- file scanner
+- dir scanner
