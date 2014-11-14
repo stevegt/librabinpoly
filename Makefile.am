@@ -5,10 +5,15 @@ AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src 
 
 
-.PHONY: test 
+#
+# testing bits
+# 
 
+BENCHFN=/tmp/rabin-benchmark.test
 export LD_LIBRARY_PATH := $(CURDIR)/src/.libs:$(LD_LIBRARY_PATH)
 export PYTHONPATH := $(CURDIR)/src:$(PYTHONPATH)
+
+.PHONY: test 
 
 test: $(SO)
 	test/test_load.py
