@@ -15,7 +15,7 @@ export PYTHONPATH := $(CURDIR)/src:$(PYTHONPATH)
 
 .PHONY: test 
 
-test: $(SO)
+test: 
 	test/test_load.py
 	test/test_zeros.py
 	test/test_ones.py
