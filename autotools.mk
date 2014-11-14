@@ -1,7 +1,7 @@
 
 # here's the right way to do this now:
 all: 
-	autoreconf
+	autoreconf --install
 
 # following adapted from:
 # http://dadinck.50webs.com/computer/auto-howto.html
