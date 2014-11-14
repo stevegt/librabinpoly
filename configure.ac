@@ -37,7 +37,8 @@ AC_FUNC_MALLOC
 AC_CHECK_FUNCS([bzero])
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+                 src/Makefile
+                 test/Makefile])
 
 AM_INIT_AUTOMAKE
 
