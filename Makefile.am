@@ -2,16 +2,16 @@ AUTOMAKE_OPTIONS = foreign
 # ACLOCAL_AMFLAGS = -I m4
 
 # SUBDIRS = doc man script src
-SUBDIRS = src test
+SUBDIRS = src test python
 
 
 #
-# testing bits
+# tests
 # 
 
 BENCHFN=/tmp/rabin-benchmark.test
 export LD_LIBRARY_PATH := $(CURDIR)/src/.libs:$(LD_LIBRARY_PATH)
-export PYTHONPATH := $(CURDIR)/src:$(PYTHONPATH)
+export PYTHONPATH := $(CURDIR)/python:$(PYTHONPATH)
 
 .PHONY: test 
 

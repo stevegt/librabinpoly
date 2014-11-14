@@ -1,10 +1,38 @@
-libdedup
-========
+librabinpoly
+============
 
-Rabin fingerprinting and deduplication library in C.
+Rabin fingerprinting library in C, for chunking files into
+content-delimited variable sized blocks.
+
+Includes python bindings.  The python library uses ctypes, so the C
+library is pure C.  This makes it possible to add other language
+bindings; send me pull requests.
+
+
+Install
+=======
+
+From tarball
+------------
+
+./configure
+make 
+make test
+make install
+
+
+From git
+--------
+
+make -f autotools.mk
+./configure
+make
+make test
+make install
+
 
 History
--------
+=======
 
 (Please send me pull requests for any corrections or additional
 information anyone wants to add here.  I want to set the record
