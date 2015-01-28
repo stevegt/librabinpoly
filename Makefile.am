@@ -4,7 +4,6 @@ AUTOMAKE_OPTIONS = foreign
 # SUBDIRS = doc man script src
 SUBDIRS = src test python
 
-
 #
 # tests
 # 
@@ -15,15 +14,15 @@ export PYTHONPATH := $(CURDIR)/python:$(PYTHONPATH)
 
 .PHONY: test 
 
-test: 
+test: test/random-42x1M.dat
 	test/test_load.py
 	test/test_16_32_64.py
 	test/test_reset.py
 	test/test_zeros.py
 	test/test_ones.py
 	test/test_next.py
-	test/test_eof.py
 	test/test_hash.py
+	test/test_eof.py
 
 
 $(BENCHFN): 
@@ -32,3 +31,5 @@ $(BENCHFN):
 benchmark: $(SO) $(BENCHFN)
 	test/benchmark.py $(BENCHFN)
 
+test/random-42x1M.dat:
+	test/mkrandom 42 1048576 > $@
