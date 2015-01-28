@@ -17,42 +17,30 @@ fread = libc.fread
 fread.argtypes = [c_void_p, c_size_t, c_size_t, c_void_p]
 
 window_size = 32
-min_segment_size = 2**14
-avg_segment_size = 2**15
-max_segment_size = 2**16
-buf_size = 128*1024
-c_ubyte_p = POINTER(c_ubyte)
+min_block_size = 2**14
+avg_block_size = 2**15
+max_block_size = 2**16
+buf_size = max_block_size*2
 
 def run():
     rp = lib.rabin_init(
-       window_size, avg_segment_size, min_segment_size, max_segment_size)
+       window_size, avg_block_size, min_block_size, max_block_size)
 
-    # buf = create_string_buffer(buf_size)
-    buf = (c_ubyte * buf_size)()
-    buf_start = addressof(buf)
-    is_new_segment = c_int()
+    buf = create_string_buffer(buf_size)
 
     fh = fopen(fn, "rb")
 
     total_size = 0
-    while True:
+    eof = 0
+    while not eof:
         fread_size = fread(buf, 1, buf_size, fh)
-        if not fread_size:
-            break
-        start = 0
-        while True:
-            bs = cast(buf_start + start, c_ubyte_p)
-            size = min(fread_size, buf_size-start)
-            blob_size = lib.rabin_segment_next(
-                    rp, bs, size, is_new_segment)
-            total_size += blob_size
-            # print start, blob_size,
-            start += blob_size
-            # print start, buf_size, is_new_segment
-            if start >= buf_size:
-                # assert is_new_segment.value == 0
-                break
-            # assert is_new_segment.value == 1
+        if fread_size < buf_size:
+            eof = 1
+        rc = lib.rabin_in(rp, buf, fread_size, eof)
+        assert rc == 0
+        while lib.rabin_out(rp):
+            frag_size = rp.contents.frag_size
+            total_size += frag_size
 
     lib.rabin_free(byref(rp))
     # print total_size

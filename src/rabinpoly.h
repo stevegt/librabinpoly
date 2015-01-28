@@ -1,5 +1,3 @@
-// $Id$
-
 /* 
  * Copyright (C) 2014 Steve Traugott (stevegt@t7a.org)
  * Copyright (C) 2013 Pavan Kumar Alampalli (pavankumar@cmu.edu)
@@ -30,18 +28,30 @@
 #include <string.h>
 
 struct rabinpoly {
-	u_int64_t poly;					// Actual polynomial
-	unsigned int window_size;		// in bytes
-	unsigned long avg_segment_size;	    // in bytes
-	unsigned long min_segment_size;	    // in bytes
-	unsigned long max_segment_size;	    // in bytes
-	unsigned long cur_seg_size;	        // tracks size of the current active segment 
+	u_int64_t poly;						// Actual polynomial
+	unsigned int window_size;			// in bytes
+	unsigned long avg_block_size;	    // in bytes
+	unsigned long min_block_size;	    // in bytes
+	unsigned long max_block_size;	    // in bytes
 
+	unsigned long block_start;	    // block start position in input stream 
+	unsigned long block_size;	    // size of the current active block 
+	int block_done;	        		// 1 if current block is complete, else 0
+
+	u_char *inbuf;  				// input buffer
+	unsigned long inbuf_pos;    	// current position in input buffer
+	unsigned long inbuf_size;   	// size of input buffer
+	unsigned long frag_start;	    // fragment start position in input buffer
+	unsigned long frag_size;	    // size of the current fragment
+
+	int eof_in;   					// 1 if input is at eof, else 0
+	int eof;   						// 1 if output is at eof, else 0
+	
 	u_int64_t fingerprint;		// current rabin fingerprint
-	u_int64_t fingerprint_mask;	// to check if we are at segment boundary
+	u_int64_t fingerprint_mask;	// to check if we are at block boundary
 
 	u_char *buf;				// circular buffer of size 'window_size'
-	unsigned int bufpos;		// current position in ciruclar buffer
+	unsigned int bufpos;		// current position in circular buffer
 
   	int shift;
 	u_int64_t T[256];		// Lookup table for mod
@@ -51,3 +61,19 @@ typedef struct rabinpoly rabinpoly_t;
 
 
 #endif /* !_RABINPOLY_H_ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

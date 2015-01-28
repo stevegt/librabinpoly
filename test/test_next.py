@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import binascii
+# import binascii
 from ctypes import *
 import hashlib
 import random
@@ -23,71 +23,64 @@ random.seed(42)
 buf_size = 128*1024
 print buf_size
 
-# buf = (c_ubyte * buf_size)()
 buf = create_string_buffer(buf_size)
 print buf
-buf_start = addressof(buf)
-c_ubyte_p = POINTER(c_ubyte)
-is_new_segment = c_int()
 
 for i in range(buf_size):
 	# buf[i] = random.randrange(0,256)
 	buf[i] = chr(random.randrange(0,256))
 
-def rnext(start, size, tcount, tseg):
-	bs = cast(buf_start + start, c_ubyte_p)
-	count = lib.rabin_segment_next(rp, bs, size, is_new_segment)
-	h = hashlib.md5(buf[start:start+count]).hexdigest() 
-	print start, count, is_new_segment.value, h
+def tnext(tcount, tdone):
+	rc = lib.rabin_out(rp)
+	assert rc == tdone
+	count = rp.contents.block_size
+	block_done = rp.contents.block_done
+	print count, block_done
 	assert count == tcount
-	assert is_new_segment.value == tseg
-	return count
+	assert block_done == tdone
 
-start = 0
-count = rnext(start, buf_size, 15848, 1)
-start += count
+def ptr_add(ptr, x):
+	addr = cast(ptr, c_void_p)
+	addr.value += x
+	return cast(addr, type(ptr))
 
-count = rnext(start, buf_size-start, 1132, 1)
-start += count
+rc = lib.rabin_in(rp, buf, buf_size, 1)
+assert rc == 0
 
-# short read
-count = rnext(start, 10, 10, 0)
-
-# reread
-count = rnext(start, buf_size-start, 5728, 1)
-start += count
-
-# continue
-count = rnext(start, buf_size-start, 10064, 1)
-start += count
+tnext(15848, 1)
+tnext(1132, 1)
+tnext(5728, 1)
+tnext(10064, 1)
 
 # relocate
 lib.rabin_reset(rp)
-dst = buf_start
-src = buf_start + 15848
+dst = addressof(buf)
+src = addressof(buf) + 15848
 count = 1132
 memmove(dst, src, count)
-count = rnext(0, buf_size, 1132, 1)
-start += count
+rc = lib.rabin_in(rp, buf, buf_size, 1)
+assert rc == 0
+tnext(1132, 1)
 
 # run it out
 print
 lib.rabin_reset(rp)
-start = 0
+rc = lib.rabin_in(rp, buf, buf_size, 1)
+assert rc == 0
 i = 0
 while True:
-	bs = cast(buf_start + start, c_ubyte_p)
-	count = lib.rabin_segment_next(rp, bs, buf_size-start, is_new_segment)
+	rc = lib.rabin_out(rp)
+	assert rc == 1
+	count = rp.contents.block_size
+	block_done = rp.contents.block_done
+	start = rp.contents.frag_start
 	h = hashlib.md5(buf[start:start+count]).hexdigest() 
-	print start, count, is_new_segment.value, h
-	start += count
-	if start < buf_size:
-		assert is_new_segment.value == 1
-	else:
-		assert is_new_segment.value == 0
-		break
+	print start, count, block_done, h
+	assert block_done == 1
 	i += 1
+	if rp.contents.eof:
+		break
 print i
-assert i == 18
+assert i == 19
 
 lib.rabin_free(byref(rp))

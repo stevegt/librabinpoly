@@ -17,12 +17,14 @@ export PYTHONPATH := $(CURDIR)/python:$(PYTHONPATH)
 
 test: 
 	test/test_load.py
+	test/test_16_32_64.py
+	test/test_reset.py
 	test/test_zeros.py
 	test/test_ones.py
 	test/test_next.py
-	test/test_reset.py
-	test/test_16_32_64.py
-	test/test_write.py
+	test/test_eof.py
+	test/test_hash.py
+
 
 $(BENCHFN): 
 	dd if=/dev/urandom of=$(BENCHFN) bs=1M count=10

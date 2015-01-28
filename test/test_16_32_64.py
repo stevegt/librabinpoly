@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
-import binascii
 from ctypes import *
-import hashlib
 import random
 
 
@@ -11,42 +9,37 @@ import rabinpoly
 lib = rabinpoly.lib
 
 window_size = 32
-min_segment_size = 16384
-avg_segment_size = 32768
-max_segment_size = 65536
+min_block_size = 16384
+avg_block_size = 32768
+max_block_size = 65536
 
 rp = lib.rabin_init(
-		window_size, avg_segment_size, min_segment_size, max_segment_size)
+		window_size, avg_block_size, min_block_size, max_block_size)
 
 
 random.seed(42)
 buf_size = 512*1024
 print buf_size
 
-# buf = (c_ubyte * buf_size)()
 buf = create_string_buffer(buf_size)
-print buf
-buf_start = addressof(buf)
-c_ubyte_p = POINTER(c_ubyte)
-is_new_segment = c_int()
 
 for i in range(buf_size):
-	# buf[i] = random.randrange(0,256)
 	buf[i] = chr(random.randrange(0,256))
 
-def rnext(start, size, tcount, tseg):
-	skip = min_segment_size - 256
-	skip = min(skip, size - 256)
-	skip = max(skip, 0)
-	skip = 0
-	size -= skip
-	bs = cast(buf_start + start + skip, c_ubyte_p)
-	print start, tcount, start + tcount
-	count = lib.rabin_segment_next(rp, bs, size, is_new_segment) + skip
-	h = hashlib.md5(buf[start:start+count]).hexdigest() 
-	print start, count, skip, is_new_segment.value, h
+def rnext(start, size, tcount, tdone):
+	print start, size,
+	bs = cast(addressof(buf) + start, c_char_p)
+	rc = lib.rabin_in(rp, bs, size, 0)
+	assert rc == 0
+	rc = lib.rabin_out(rp)
+	assert rc == 1
+	count = rp.contents.frag_size
+	print count, 
 	assert count == tcount
-	assert is_new_segment.value == tseg
+	done = rp.contents.block_done
+	print done, 
+	assert done == tdone
+	print
 	return count
 
 lengths = [

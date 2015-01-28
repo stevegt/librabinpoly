@@ -1,3 +1,29 @@
+# autotools
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/
+compile
+config.guess
+config.h
+config.h.in
+config.log
+config.status
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+missing
+src/.deps/
+src/.libs/
+src/Makefile
+src/Makefile.in
+stamp-h1
+test/Makefile
+test/Makefile.in
+
 # Object files
 *.o
 *.ko
@@ -27,3 +53,8 @@
 *.i*86
 *.x86_64
 *.hex
+
+# local
+*.swp
+*.pyc
+
