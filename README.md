@@ -15,20 +15,20 @@ Install
 From tarball
 ------------
 
-./configure
-make 
-make test
-make install
+    ./configure
+    make 
+    make test
+    make install
 
 
 From git
 --------
 
-make -f autotools.mk
-./configure
-make
-make test
-make install
+    make -f autotools.mk
+    ./configure
+    make
+    make test
+    make install
 
 
 History
