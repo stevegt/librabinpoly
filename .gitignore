@@ -23,6 +23,7 @@ src/Makefile.in
 stamp-h1
 test/Makefile
 test/Makefile.in
+test/random-42x1M.dat
 
 # Object files
 *.o
