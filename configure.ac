@@ -2,12 +2,12 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
 # change version number here and below in LIB_*
-AC_INIT([librabinpoly], [0.10.0])
+AC_INIT([librabinpoly], [0.11.0])
 AC_CONFIG_SRCDIR([src/rabinpoly.c])
 AC_CONFIG_HEADER([config.h])
 
 LIB_CURRENT=0
-LIB_REVISION=10
+LIB_REVISION=11
 LIB_AGE=0
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)

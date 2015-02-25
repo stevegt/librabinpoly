@@ -35,9 +35,117 @@
  */
 
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include "rabinpoly.h"
-#include "msb.h"
+
+/*
+ * Routines for calculating the most significant bit of an integer.
+ */
+
+/* Highest bit set in a byte */
+const char bytemsb[0x100] = {
+  0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5,
+  5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+  6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7,
+  7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+  7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+  7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+};
+
+/* Least set bit (ffs) */
+const char bytelsb[0x100] = {
+  0, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
+  4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 7, 1, 2, 1, 3, 1, 2, 1,
+  4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+  6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
+  4, 1, 2, 1, 3, 1, 2, 1, 8, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1,
+  4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+  7, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
+  4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+};
+
+/* Find last set (most significant bit) */
+static inline u_int fls32 (u_int32_t v)
+{
+  if (v & 0xffff0000) {
+    if (v & 0xff000000)
+      return 24 + bytemsb[v>>24];
+    else
+      return 16 + bytemsb[v>>16];
+  }
+  if (v & 0x0000ff00)
+    return 8 + bytemsb[v>>8];
+  else
+    return bytemsb[v];
+}
+
+//static inline u_int fls64 (u_int64_t) __attribute__ ((const));
+static inline char fls64 (u_int64_t v)
+{
+  u_int32_t h;
+  if ((h = v >> 32))
+    return 32 + fls32 (h);
+  else
+    return fls32 ((u_int32_t) v);
+}
+
+// static inline int log2c64 (u_int64_t) __attribute__ ((const));
+// static inline int
+// log2c64 (u_int64_t v)
+// {
+//      return v ? (int) fls64 (v - 1) : -1;
+// }
+
+#define fls(v) (sizeof (v) > 4 ? fls64 (v) : fls32 (v))
+// #define log2c(v) (sizeof (v) > 4 ? log2c64 (v) : log2c32 (v))
+
+/*
+ * For symmetry, a 64-bit find first set, "ffs," that finds the least
+ * significant 1 bit in a word.
+ */
+
+// static inline u_int
+// ffs32 (u_int32_t v)
+// {
+//   int vv;
+//   if (v & 0xffff) {
+//     if ((vv = (v & 0xff)))
+//       return bytelsb[vv];
+//     else
+//       return 8 + bytelsb[v >> 8 & 0xff];
+//   }
+//   else if ((vv = (v & 0xff0000)))
+//     return 16 + bytelsb[vv >> 16];
+//   else if (v)
+//     return 24 + bytelsb[v >> 24 & 0xff];
+//   else
+//     return 0;
+// }
+// 
+// static inline u_int
+// ffs64 (u_int64_t v)
+// {
+//   u_int32_t l;
+//   if ((l = v & 0xffffffff))
+//     return fls32 (l);
+//   else if ((l = v >> 32))
+//     return 32 + fls32 (l);
+//   else
+//     return 0;
+// }
+// 
+// #define ffs(v) (sizeof (v) > 4 ? ffs64 (v) : ffs32 (v))
+
+
 #define INT64(n) n##LL
 #define MSB64 INT64(0x8000000000000000)
 
