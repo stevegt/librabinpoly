@@ -33,3 +33,8 @@ benchmark: $(SO) $(BENCHFN)
 
 test/random-42x1M.dat:
 	test/mkrandom 42 1048576 > $@
+
+lint:
+	cppcheck --enable=all src/*.c src/*.h
+	make clean && scan-build -V make
+

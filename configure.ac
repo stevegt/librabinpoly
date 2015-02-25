@@ -42,6 +42,14 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  test/Makefile])
 
+AC_MSG_CHECKING(whether compiler understands -Wall)
+old_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall"
+AC_TRY_COMPILE([],[],
+               AC_MSG_RESULT(yes),
+               AC_MSG_RESULT(no)
+               CFLAGS="$old_CFLAGS")
+
 AM_INIT_AUTOMAKE
 
 AC_OUTPUT

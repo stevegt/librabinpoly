@@ -60,6 +60,15 @@ struct rabinpoly {
 typedef struct rabinpoly rabinpoly_t;
 
 
+extern rabinpoly_t *rabin_init(unsigned int window_size,
+						unsigned long avg_block_size, 
+						unsigned long min_block_size,
+						unsigned long max_block_size);
+extern void rabin_reset(rabinpoly_t *rp);
+extern void rabin_free(rabinpoly_t **p_rp);
+extern int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size, int eof);
+extern int rabin_out(rabinpoly_t *rp);
+
 #endif /* !_RABINPOLY_H_ */
 
 

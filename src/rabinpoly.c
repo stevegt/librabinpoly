@@ -219,12 +219,13 @@ rabinpoly_t *rabin_init(unsigned int window_size,
 
 	rp->buf = (u_char *)malloc(rp->window_size*sizeof(u_char));
 	if (!rp->buf){
+        free(rp);
 		return NULL;
 	}
     rabin_reset(rp);
-	calcT(rp);
+    calcT(rp);
 
-	return rp;
+    return rp;
 }
 
 
@@ -293,7 +294,7 @@ void rabin_free(rabinpoly_t **p_rp)
   
  */
 
-int rabin_in(rabinpoly_t *rp, char *buf, unsigned long size, int eof) {
+int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size, int eof) {
 
 	if (!rp || !buf) {
 		return -1;
