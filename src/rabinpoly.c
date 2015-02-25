@@ -34,10 +34,12 @@
  *
  */
 
+#include "rabinpoly.h"
+
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 
-#include "rabinpoly.h"
 
 /*
  * Routines for calculating the most significant bit of an integer.

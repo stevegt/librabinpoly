@@ -6,6 +6,7 @@ AC_INIT([librabinpoly], [0.11.0])
 AC_CONFIG_SRCDIR([src/rabinpoly.c])
 AC_CONFIG_HEADER([config.h])
 
+# http://www.freesoftwaremagazine.com/articles/building_shared_libraries_once_using_autotools
 LIB_CURRENT=0
 LIB_REVISION=11
 LIB_AGE=0

@@ -21,11 +21,14 @@
  *
  */
 
+/*
+ * http://www.umich.edu/~eecs381/handouts/CHeaderFileGuidelines.pdf
+ */
+
 #ifndef _RABINPOLY_H_
 #define _RABINPOLY_H_ 
 
 #include <sys/types.h>
-#include <string.h>
 
 struct rabinpoly {
 	u_int64_t poly;						// Actual polynomial
