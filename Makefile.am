@@ -14,7 +14,7 @@ export PYTHONPATH := $(CURDIR)/python:$(PYTHONPATH)
 
 .PHONY: test 
 
-test: test/random-42x1M.dat
+test: test/data/random-42x1M.dat
 	test/test_load.py
 	test/test_16_32_64.py
 	test/test_reset.py
@@ -23,6 +23,7 @@ test: test/random-42x1M.dat
 	test/test_next.py
 	test/test_hash.py
 	test/test_eof.py
+	test/test_pmlog.py
 
 
 $(BENCHFN): 
