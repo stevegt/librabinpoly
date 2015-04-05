@@ -4,9 +4,7 @@ import binascii
 from ctypes import *
 import random
 
-import rabinpoly
-
-lib = rabinpoly.lib
+import rabinpoly as lib
 
 window_size = 32
 min_block_size = 1024
@@ -25,50 +23,52 @@ for i in range(buf_size):
 
 start = 0
 
-rc = lib.rabin_in(rp, buf, buf_size, 0)
-assert rc == 0
+rc = lib.rabin_in(rp, buf, buf_size)
+assert rc == 1
 rc = lib.rabin_out(rp)
 assert rc == 1
 count = rp.contents.frag_size
 print count
 assert count == 15848
+assert rp.contents.state & lib.PROCESS_BLOCK 
 start += count
 
 # short read
+lib.rabin_reset(rp)
 bs = cast(addressof(buf) + start, c_char_p)
 print addressof(buf), bs
-rc = lib.rabin_in(rp, bs, 10, 0)
-assert rc == 0
+rc = lib.rabin_in(rp, bs, 10)
+assert rc == 1
 rc = lib.rabin_out(rp)
 assert rc == 1
 count = rp.contents.frag_size
 print count
 assert count == 10
-assert rp.contents.block_done == 0
+assert rp.contents.state & lib.PROCESS_BLOCK == 0
 start += count
 
 # resume
 bs = cast(addressof(buf) + start, c_char_p)
-rc = lib.rabin_in(rp, bs, buf_size-start, 0)
-assert rc == 0
+rc = lib.rabin_in(rp, bs, buf_size-start)
+assert rc == 1
 rc = lib.rabin_out(rp)
 assert rc == 1
 count = rp.contents.block_size
 print count
 assert count == 1132
-assert rp.contents.block_done == 1
+assert rp.contents.state & lib.PROCESS_BLOCK 
 
 # reset
 start -= 10
 lib.rabin_reset(rp)
 bs = cast(addressof(buf) + start, c_char_p)
-rc = lib.rabin_in(rp, bs, buf_size-start, 0)
-assert rc == 0
+rc = lib.rabin_in(rp, bs, buf_size-start)
+assert rc == 1
 rc = lib.rabin_out(rp)
 assert rc == 1
 count = rp.contents.frag_size
 print count
 assert count == 1132
-assert rp.contents.block_done == 1
+assert rp.contents.state & lib.PROCESS_BLOCK 
 
-lib.rabin_free(byref(rp))
+lib.rabin_free(rp)

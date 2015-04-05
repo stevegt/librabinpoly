@@ -36,10 +36,10 @@
 
 #include "rabinpoly.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-
 
 /*
  * Routines for calculating the most significant bit of an integer.
@@ -344,20 +344,24 @@ void rabin_reset(rabinpoly_t *rp) {
 	rp->bufpos = -1;
 	rp->block_start = 0;
 	rp->block_size = 0;
-	rp->block_done = 0;
+    rp->inbuf_size = 0;
+    rp->inbuf_pos = 0;
+    rp->frag_start = 0;
+    rp->frag_size = 0;
+	rp->state = RABIN_IN;
 	bzero ((char*) rp->buf, rp->window_size*sizeof (u_char));
 }
 
 
-void rabin_free(rabinpoly_t **p_rp)
+void rabin_free(rabinpoly_t *rp)
 {
-	if (!p_rp || !*p_rp) {
+	if (!rp) {
 		return;
 	}
 
-	free((*p_rp)->buf);
-	free(*p_rp);
-	*p_rp = NULL;
+	free(rp->buf);
+	free(rp);
+	rp = NULL;
 }
 
 
@@ -404,21 +408,22 @@ void rabin_free(rabinpoly_t **p_rp)
   
  */
 
-int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size, int eof) {
+int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size) {
 
 	if (!rp || !buf) {
-		return -1;
+		return 0;
 	}
+
+	assert (rp->state & RABIN_IN);
 
     rp->inbuf = buf;
     rp->inbuf_size = size;
     rp->inbuf_pos = 0;
     rp->frag_start = 0;
     rp->frag_size = 0;
-    rp->eof_in = eof;
-    rp->eof = 0;
+	rp->state = RABIN_OUT;
 
-    return 0;
+    return 1;
 }
 
 
@@ -430,11 +435,13 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size, int eof) {
     Synopsis (in pseudo code):
     --------------------------
 
+	XXX
+
         rp = rabin_init(...)
+		hash.reset()
         while buf = file.read(size):
             eof = len(buf) < size
             rabin_in(rp, buf, size, eof)
-            hash.reset()
             while rabin_out(rp):
                 hash.append(rp->frag_start, rp->frag_size)
                 if rp->block_done:
@@ -478,34 +485,56 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size, int eof) {
     Return values:
     --------------
 
-    0
+	Return value is a bitmask composed of:
 
-		Next fragment not available.  Either we've reached eof on
-		input or we need the caller to load the buffer with new input
-		data.  Caller should check rp->eof to deermine which is the
-		case.
-        
-    1
+	RABIN_IN
 
-		Next fragment is available.  Caller should call rabin_out
-		again after handling current fragment.
+		Caller must load rp->inbuf with new input data by calling
+		rabin_in(), then call rabin_out() again.  
 
-  
+	PROCESS_FRAGMENT
+
+		Caller must process the current fragment (e.g. update block
+		hash), then call rabin_out() again.  
+
+	PROCESS_BLOCK
+
+		Caller must process the completed block (e.g. finalize block
+		hash and do something with it), then call rabin_out()
+		again.  
+
+	RABIN_RESET
+
+		End of stream.  Caller should clean up (close files etc.) and
+		must not call rabin_out() again without a rabin_reset() first.
+			
  */
 
 int rabin_out(rabinpoly_t *rp) {
 
-	if (rp->inbuf_pos == rp->inbuf_size) {
-        return 0;
-    }
+	// reminder: rp->state is what we last returned to the caller, so
+	// what we're checking here is actually the previous state.
+	
+	assert (!(rp->state & RABIN_IN));
+	assert (!(rp->state & RABIN_RESET));
+	assert (rp->state & RABIN_OUT);
 
-    if (rp->block_done) {
-        rp->block_start += rp->block_size;
-        rp->block_size = 0;
-        rp->frag_start = rp->inbuf_pos;
-        rp->frag_size = 0;
-    }
-	rp->block_done = 0;
+	// if (rp->inbuf_pos == rp->inbuf_size) {
+	if (!rp->inbuf_size) {
+		/* end of file */
+		rp->state = RABIN_RESET;
+		return 1;
+	}
+
+	if (PROCESS_FRAGMENT & rp->state) {
+		rp->frag_start = rp->inbuf_pos;
+		rp->frag_size = 0;
+	}
+
+	if (PROCESS_BLOCK & rp->state) {
+		rp->block_start += rp->block_size;
+		rp->block_size = 0;
+	}
 
     /* 
      * Skip early part of each block -- there appears to be no reason
@@ -536,36 +565,30 @@ int rabin_out(rabinpoly_t *rp) {
         // printf("%d %d\n", rp->inbuf_pos, rp->inbuf_size);
         if (rp->inbuf_pos == rp->inbuf_size) {
 			/* end of buffer */
-			if (rp->eof_in) {
-				/* end of file */
-				rp->block_done = 1;
-				rp->eof = 1;
+			rp->state = RABIN_IN;
+			if (rp->frag_size > 0) {
+				rp->state |= PROCESS_FRAGMENT;
 			}
 			return 1;
-        }
+		}
 
-        if (rp->block_done) {
-            /* tell caller to process block and call us again */
-			return 1;
-        }
-
-        /* feed the next byte into rabinpoly algo */
+		/* feed the next byte into rabinpoly algo */
 		slide8(rp, rp->inbuf[rp->inbuf_pos]);
-        rp->inbuf_pos++;
-        rp->block_size++;
-        rp->frag_size++;
+		rp->inbuf_pos++;
+		rp->block_size++;
+		rp->frag_size++;
 
 		if (rp->block_size < rp->min_block_size) {
-            /* short block */
+            /* too short to be a block */
 			continue;
 		}
 
         if (rp->block_size == rp->max_block_size) {
             /* full block */
-			rp->block_done = 1;
-            continue;
+			rp->state = PROCESS_FRAGMENT | PROCESS_BLOCK | RABIN_OUT;
+			return 1;
         }
-
+	
         /* 
          
         We compare the low-order fingerprint bits (LOFB) to
@@ -584,8 +607,8 @@ int rabin_out(rabinpoly_t *rp) {
 
 		if((rp->fingerprint & rp->fingerprint_mask) == rp->fingerprint_mask) {
             /* fingerprint boundary found */
-			rp->block_done = 1;
-            continue;
+			rp->state = PROCESS_FRAGMENT | PROCESS_BLOCK | RABIN_OUT;
+			return 1;
         }
 	}
 }

@@ -30,11 +30,14 @@ $(BENCHFN):
 
 benchmark: $(SO) $(BENCHFN)
 	test/benchmark.py $(BENCHFN)
+	time examples/benchmark < $(BENCHFN)
 
-test/random-42x1M.dat:
+test/data/random-42x1M.dat:
 	test/mkrandom 42 1048576 > $@
 
 lint:
 	cppcheck --enable=all src/*.c src/*.h
 	make clean && scan-build -V make
 
+python/rabinpoly.py:
+	ctypesgen.py -L $(LD_LIBRARY_PATH) -l rabinpoly -o python/rabinpoly.py $(CURDIR)/src/rabinpoly.h

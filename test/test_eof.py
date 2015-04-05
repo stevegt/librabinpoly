@@ -6,9 +6,7 @@ import hashlib
 import random
 
 
-import rabinpoly
-
-lib = rabinpoly.lib
+import rabinpoly as lib
 
 window_size = 32
 min_block_size = 1024
@@ -17,7 +15,7 @@ max_block_size = 65536
 
 rp = lib.rabin_init(
 		window_size, avg_block_size, min_block_size, max_block_size)
-
+rpc = rp.contents
 
 random.seed(42)
 buf_size = max_block_size 
@@ -45,23 +43,20 @@ def mkmf(size):
 def teof(mf_size):
 	mf = mkmf(mf_size)
 	eof = 0
-	while not eof:
-		txt = mf.read(max_block_size)
-		if len(txt) < max_block_size:
-			eof = 1
-		buf = create_string_buffer(txt)
-		rc = lib.rabin_in(rp, buf, len(txt), eof)
-		assert rc == 0
-		while lib.rabin_out(rp):
-			done = rp.contents.block_done
-			print eof, done, rp.contents.frag_size
-			assert done in (0,1)
-			if done == 0:
-				assert eof == 0
-				assert rp.contents.eof == 0
-				break
-		if rp.contents.eof == 1:
+	while True:
+		if rpc.state & lib.RABIN_IN:
+			txt = mf.read(max_block_size)
+			if len(txt) < max_block_size:
+				eof = 1
+			buf = create_string_buffer(txt)
+			rc = lib.rabin_in(rp, buf, len(txt))
+			assert rc == 1
+		if rpc.state & lib.RABIN_OUT:
+			rc = lib.rabin_out(rp)
+			assert rc == 1
+		if rpc.state & lib.RABIN_RESET:
 			assert eof == 1
+			break
 	lib.rabin_reset(rp)
 
 teof(127)
@@ -81,4 +76,4 @@ teof(max_block_size+1)
 teof(82748)
 
 
-lib.rabin_free(byref(rp))
+lib.rabin_free(rp)

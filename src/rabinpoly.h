@@ -30,6 +30,14 @@
 
 #include <sys/types.h>
 
+#define RABIN_IN          1
+#define RABIN_OUT         2
+#define PROCESS_FRAGMENT  4
+#define PROCESS_BLOCK     8
+#define RABIN_RESET      16
+
+// XXX remove struct name
+// XXX change most of these to size_t
 struct rabinpoly {
 	u_int64_t poly;						// Actual polynomial
 	unsigned int window_size;			// in bytes
@@ -37,19 +45,18 @@ struct rabinpoly {
 	unsigned long min_block_size;	    // in bytes
 	unsigned long max_block_size;	    // in bytes
 
+	int state;	        
+
+	unsigned long frag_start;	    // fragment start position in input buffer
+	unsigned long frag_size;	    // size of the current fragment
+
 	unsigned long block_start;	    // block start position in input stream 
 	unsigned long block_size;	    // size of the current active block 
-	int block_done;	        		// 1 if current block is complete, else 0
 
 	u_char *inbuf;  				// input buffer
 	unsigned long inbuf_pos;    	// current position in input buffer
 	unsigned long inbuf_size;   	// size of input buffer
-	unsigned long frag_start;	    // fragment start position in input buffer
-	unsigned long frag_size;	    // size of the current fragment
 
-	int eof_in;   					// 1 if input is at eof, else 0
-	int eof;   						// 1 if output is at eof, else 0
-	
 	u_int64_t fingerprint;		// current rabin fingerprint
 	u_int64_t fingerprint_mask;	// to check if we are at block boundary
 
@@ -60,6 +67,7 @@ struct rabinpoly {
 	u_int64_t T[256];		// Lookup table for mod
 	u_int64_t U[256];
 };
+// XXX rename rabinpoly_t, move to tail of struct decl 
 typedef struct rabinpoly rabinpoly_t;
 
 
@@ -68,8 +76,8 @@ extern rabinpoly_t *rabin_init(unsigned int window_size,
 						unsigned long min_block_size,
 						unsigned long max_block_size);
 extern void rabin_reset(rabinpoly_t *rp);
-extern void rabin_free(rabinpoly_t **p_rp);
-extern int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size, int eof);
+extern void rabin_free(rabinpoly_t *rp);
+extern int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size);
 extern int rabin_out(rabinpoly_t *rp);
 
 #endif /* !_RABINPOLY_H_ */

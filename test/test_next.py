@@ -6,9 +6,7 @@ import hashlib
 import random
 
 
-import rabinpoly
-
-lib = rabinpoly.lib
+import rabinpoly as lib
 
 window_size = 32
 min_segment_size = 1024
@@ -17,7 +15,7 @@ max_segment_size = 65536
 
 rp = lib.rabin_init(
 		window_size, avg_segment_size, min_segment_size, max_segment_size)
-
+rpc = rp.contents
 
 random.seed(42)
 buf_size = 128*1024
@@ -32,12 +30,11 @@ for i in range(buf_size):
 
 def tnext(tcount, tdone):
 	rc = lib.rabin_out(rp)
-	assert rc == tdone
-	count = rp.contents.block_size
-	block_done = rp.contents.block_done
-	print count, block_done
+	assert rc == 1
+	if tdone:
+		assert rpc.state & lib.PROCESS_BLOCK 
+	count = rpc.block_size
 	assert count == tcount
-	assert block_done == tdone
 
 def ptr_add(ptr, x):
 	addr = cast(ptr, c_void_p)
@@ -45,7 +42,7 @@ def ptr_add(ptr, x):
 	return cast(addr, type(ptr))
 
 rc = lib.rabin_in(rp, buf, buf_size, 1)
-assert rc == 0
+assert rc == 1
 
 tnext(15848, 1)
 tnext(1132, 1)
@@ -58,29 +55,32 @@ dst = addressof(buf)
 src = addressof(buf) + 15848
 count = 1132
 memmove(dst, src, count)
-rc = lib.rabin_in(rp, buf, buf_size, 1)
-assert rc == 0
+rc = lib.rabin_in(rp, buf, buf_size)
+assert rc == 1
 tnext(1132, 1)
 
 # run it out
 print
 lib.rabin_reset(rp)
-rc = lib.rabin_in(rp, buf, buf_size, 1)
-assert rc == 0
+rc = lib.rabin_in(rp, buf, buf_size)
+assert rc == 1
 i = 0
 while True:
 	rc = lib.rabin_out(rp)
-	assert rc == 1
-	count = rp.contents.block_size
-	block_done = rp.contents.block_done
-	start = rp.contents.frag_start
-	h = hashlib.md5(buf[start:start+count]).hexdigest() 
-	print start, count, block_done, h
-	assert block_done == 1
-	i += 1
-	if rp.contents.eof:
+	if rpc.state & lib.RABIN_RESET: 
 		break
+	assert rc == 1
+	count = rpc.block_size
+	assert rpc.state & lib.PROCESS_FRAGMENT, rpc.state
+	start = rpc.frag_start
+	h = hashlib.md5(buf[start:start+count]).hexdigest() 
+	print start, count, h
+	i += 1
+	if rpc.state & lib.RABIN_IN: 
+		rc = lib.rabin_in(rp, buf, 0)
+		assert rc == 1
+
 print i
 assert i == 19
 
-lib.rabin_free(byref(rp))
+lib.rabin_free(rp)

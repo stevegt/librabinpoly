@@ -2,7 +2,7 @@
 
 import rabinpoly
 
-lib = rabinpoly.lib
+lib = rabinpoly
 
 window_size = 32
 min_segment_size = 1024
@@ -15,7 +15,7 @@ assert rp.contents.window_size == window_size
 assert rp.contents.T[1] == 13827942727904890243
 
 
-from guppy import hpy; hp=hpy()
-print hp.heap()
+# from guppy import hpy; hp=hpy()
+# print hp.heap()
 lib.rabin_free(rp)
-print hp.heap()
+# print hp.heap()
