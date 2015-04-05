@@ -1,0 +1,14 @@
+The files in this directory are checked in on the test_data branch in
+git.  See librabinpoly/Makefile.am for how they are normally
+retrieved.
+
+
+random-42x1M.dat was generated using 'test/mkrandom 42 1048576' with
+python 2.7.6.
+
+pmlog.dat is an interesting file; arbitrary ASCII log text, exactly
+three blocks long, each block exactly 64k in size.  It exposed a
+one-off error when I was writing and testing examples/hash_md5.
+Restructuring the code to help prevent future devs (including myself)
+from making this sort of error is what triggered me moving to the
+state-machine-based API.  

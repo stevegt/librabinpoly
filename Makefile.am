@@ -14,7 +14,7 @@ export PYTHONPATH := $(CURDIR)/python:$(PYTHONPATH)
 
 .PHONY: test 
 
-test: test/data/random-42x1M.dat
+test: test/data/random-42x1M.dat test/data/pmlog.dat
 	test/test_load.py
 	test/test_16_32_64.py
 	test/test_reset.py
@@ -34,7 +34,10 @@ benchmark: $(SO) $(BENCHFN)
 	time examples/benchmark < $(BENCHFN)
 
 test/data/random-42x1M.dat:
-	test/mkrandom 42 1048576 > $@
+	git cat-file -p 3a44d8491c56b1fdf39c7f753cfa8b4c618e9f1d > $@
+
+test/data/pmlog.dat:
+	git cat-file -p 821bafa6af7025b5c8dd4ea73d9599081ae5a68e > $@
 
 lint:
 	cppcheck --enable=all src/*.c src/*.h
