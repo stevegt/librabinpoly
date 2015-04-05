@@ -1,14 +1,22 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-# change version number here and below in LIB_*
-AC_INIT([librabinpoly], [0.11.0])
+
+# change version number here and below in LIB_*, following the rules in:
+#
+#   http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+#
+#   (Ignore the warning on that page against making them the same -- make them the
+#   same; this package is all about the library, and it makes no sense to use 
+# 	e.g. semantic versioning here.)
+#
+AC_INIT([librabinpoly], [0.12.0])
 AC_CONFIG_SRCDIR([src/rabinpoly.c])
 AC_CONFIG_HEADER([config.h])
 
 # http://www.freesoftwaremagazine.com/articles/building_shared_libraries_once_using_autotools
 LIB_CURRENT=0
-LIB_REVISION=11
+LIB_REVISION=12
 LIB_AGE=0
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)
@@ -43,11 +51,12 @@ AC_CHECK_FUNCS([bzero])
 AC_CONFIG_FILES([Makefile
                  python/Makefile
                  src/Makefile
+                 examples/Makefile
                  test/Makefile])
 
 AC_MSG_CHECKING(whether compiler understands -Wall)
 old_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -Wall"
+CFLAGS="$CFLAGS -Werror"
 AC_TRY_COMPILE([],[],
                AC_MSG_RESULT(yes),
                AC_MSG_RESULT(no)
