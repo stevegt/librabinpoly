@@ -29,7 +29,9 @@ AC_PROG_MKDIR_P
 LT_INIT
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdlib.h string.h])
+AC_CHECK_HEADERS([stdlib.h string.h openssl/md5.h])
+AC_SEARCH_LIBS([MD5_Update], [crypto])
+
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE
