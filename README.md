@@ -8,6 +8,7 @@ Includes python bindings.  The python library uses ctypes, so the C
 library is pure C.  This makes it possible to add other language
 bindings; send me pull requests.
 
+The API should not be considered stable until we reach version 1.X.
 
 Install
 =======
