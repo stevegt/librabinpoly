@@ -30,16 +30,16 @@ int main(int argc, char **argv){
 	// }
 
 	unsigned int window_size = 32;
-	unsigned long min_block_size = 1024;
-	unsigned long avg_block_size = 8192;
-	unsigned long max_block_size = 65536;
+	size_t min_block_size = 1024;
+	size_t avg_block_size = 8192;
+	size_t max_block_size = 65536;
 
 	rabinpoly_t *rp;
    
 	rp = rabin_init(
 			window_size, avg_block_size, min_block_size, max_block_size);
 
-	unsigned long buf_size = 128*1024;
+	size_t buf_size = 128*1024;
 	unsigned char buf[buf_size];
 
 	int rc;

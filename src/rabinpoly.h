@@ -37,25 +37,24 @@
 #define RABIN_RESET      16
 
 // XXX remove struct name
-// XXX change most of these to size_t
 struct rabinpoly {
 	u_int64_t poly;						// Actual polynomial
 	unsigned int window_size;			// in bytes
-	unsigned long avg_block_size;	    // in bytes
-	unsigned long min_block_size;	    // in bytes
-	unsigned long max_block_size;	    // in bytes
+	size_t avg_block_size;	    // in bytes
+	size_t min_block_size;	    // in bytes
+	size_t max_block_size;	    // in bytes
 
 	int state;	        
 
-	unsigned long frag_start;	    // fragment start position in input buffer
-	unsigned long frag_size;	    // size of the current fragment
+	size_t frag_start;	    // fragment start position in input buffer
+	size_t frag_size;	    // size of the current fragment
 
-	unsigned long block_start;	    // block start position in input stream 
-	unsigned long block_size;	    // size of the current active block 
+	size_t block_start;	    // block start position in input stream 
+	size_t block_size;	    // size of the current active block 
 
 	u_char *inbuf;  				// input buffer
-	unsigned long inbuf_pos;    	// current position in input buffer
-	unsigned long inbuf_size;   	// size of input buffer
+	size_t inbuf_pos;    	// current position in input buffer
+	size_t inbuf_size;   	// size of input buffer
 
 	u_int64_t fingerprint;		// current rabin fingerprint
 	u_int64_t fingerprint_mask;	// to check if we are at block boundary
@@ -72,12 +71,12 @@ typedef struct rabinpoly rabinpoly_t;
 
 
 extern rabinpoly_t *rabin_init(unsigned int window_size,
-						unsigned long avg_block_size, 
-						unsigned long min_block_size,
-						unsigned long max_block_size);
+						size_t avg_block_size, 
+						size_t min_block_size,
+						size_t max_block_size);
 extern void rabin_reset(rabinpoly_t *rp);
 extern void rabin_free(rabinpoly_t *rp);
-extern int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size);
+extern int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size);
 extern int rabin_out(rabinpoly_t *rp);
 
 #endif /* !_RABINPOLY_H_ */

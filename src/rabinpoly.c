@@ -303,9 +303,9 @@ static u_int64_t append8(rabinpoly_t *rp, u_int64_t p, u_char m) {
 */
 
 rabinpoly_t *rabin_init(unsigned int window_size,
-						unsigned long avg_block_size, 
-						unsigned long min_block_size,
-						unsigned long max_block_size) {
+						size_t avg_block_size, 
+						size_t min_block_size,
+						size_t max_block_size) {
 	rabinpoly_t *rp;
 
 	if (!min_block_size || !avg_block_size || !max_block_size ||
@@ -408,7 +408,7 @@ void rabin_free(rabinpoly_t *rp)
   
  */
 
-int rabin_in(rabinpoly_t *rp, u_char *buf, unsigned long size) {
+int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
 
 	if (!rp || !buf) {
 		return 0;
@@ -551,7 +551,7 @@ int rabin_out(rabinpoly_t *rp) {
      *
      */
 
-    unsigned long skip = rp->min_block_size - 256;
+    size_t skip = rp->min_block_size - 256;
 	if ((rp->block_size == 0) && 
             ((rp->inbuf_size - rp->inbuf_pos) > rp->min_block_size+1) && 
             (rp->min_block_size > 512)) {
