@@ -34,9 +34,9 @@ int main(int argc, char **argv){
 	size_t avg_block_size = 8192;
 	size_t max_block_size = 65536;
 
-	rabinpoly_t *rp;
+	RabinPoly *rp;
    
-	rp = rabin_init(
+	rp = rp_init(
 			window_size, avg_block_size, min_block_size, max_block_size);
 
 	size_t buf_size = 128*1024;
@@ -47,20 +47,20 @@ int main(int argc, char **argv){
 	// MD5_Init(&mdctx);
 	while (1) {
 
-		if (RABIN_OUT & rp->state) {
-			rc = rabin_out(rp); 
+		if (RP_OUT & rp->state) {
+			rc = rp_out(rp); 
 			assert (rc == 1);
 		}
 
 		/*
-		if (PROCESS_FRAGMENT & rp->state) {
+		if (RP_PROCESS_FRAGMENT & rp->state) {
 			assert (rp->frag_start + rp->frag_size <= buf_size);
 			if (rp->frag_size) {
 				MD5_Update(&mdctx, buf+rp->frag_start, rp->frag_size);
 			}
 		}
 
-		if (PROCESS_BLOCK & rp->state) {
+		if (RP_PROCESS_BLOCK & rp->state) {
 			MD5_Final(digest, &mdctx);
 			printf("%ld %ld ", rp->block_start, rp->block_size);
 			for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
@@ -71,24 +71,24 @@ int main(int argc, char **argv){
 		}
 		*/
 
-		if (RABIN_IN & rp->state) {
+		if (RP_IN & rp->state) {
 			fread_count = fread(buf, 1, buf_size, stdin);
 			if (fread_count < buf_size) {
 				if (ferror(stdin)) {
 					return EIO;
 				}
 			}
-			rc = rabin_in(rp, buf, fread_count);
+			rc = rp_in(rp, buf, fread_count);
 			assert (rc == 1);
 		}
 
-		if (RABIN_RESET & rp->state) {
+		if (RP_RESET & rp->state) {
 			assert (feof(stdin));
 			break;
 		}
 	}
 
-	rabin_free(rp);
+	rp_free(rp);
 
 	return 0;
 }

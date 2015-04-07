@@ -24,13 +24,13 @@
 /*
  * To use this library:
  *
- *      rabin_init() to get started
- *      rabin_in() in a loop to pass input chunks into rabin algorithm
- *      rabin_out() in a loop to get output blocks from rabin algorithm
- *      rabin_reset() to start a new input stream
- *      rabin_free() to free memory when done
+ *      rp_init() to get started
+ *      rp_in() in a loop to pass input chunks into rabin algorithm
+ *      rp_out() in a loop to get output blocks from rabin algorithm
+ *      rp_reset() to start a new input stream
+ *      rp_free() to free memory when done
  *
- * We maintain state by passing a rabinpoly_t to each function.
+ * We maintain state by passing a RabinPoly to each function.
  *
  */
 
@@ -162,9 +162,9 @@ static u_int64_t polymod (u_int64_t nh, u_int64_t nl, u_int64_t d);
 static void polymult (u_int64_t *php, u_int64_t *plp, u_int64_t x, u_int64_t y);
 static u_int64_t polymmult (u_int64_t x, u_int64_t y, u_int64_t d);
 
-static void calcT(rabinpoly_t *rp);
-static u_int64_t slide8(rabinpoly_t *rp, u_char m);
-static u_int64_t append8(rabinpoly_t *rp, u_int64_t p, u_char m);
+static void calcT(RabinPoly *rp);
+static u_int64_t slide8(RabinPoly *rp, u_char m);
+static u_int64_t append8(RabinPoly *rp, u_int64_t p, u_char m);
 
 /*
      functions to calculate the rabin hash
@@ -217,11 +217,11 @@ static u_int64_t polymmult (u_int64_t x, u_int64_t y, u_int64_t d) {
 
 /*
     Initialize the T[] and U[] array for faster computation of rabin
-    fingerprint.  Called only once from rabin_init() during
+    fingerprint.  Called only once from rp_init() during
     initialization.
  */
 
-static void calcT(rabinpoly_t *rp) { 
+static void calcT(RabinPoly *rp) { 
     unsigned int i; 
     int xshift = fls64 (rp->poly) - 1; 
     rp->shift = xshift - 8;
@@ -246,7 +246,7 @@ static void calcT(rabinpoly_t *rp) {
    fingerprint.
  */
 
-static u_int64_t slide8(rabinpoly_t *rp, u_char m) { 
+static u_int64_t slide8(RabinPoly *rp, u_char m) { 
     rp->bufpos++;
 	if (rp->bufpos >= rp->window_size) {
 		rp->bufpos = 0;
@@ -256,19 +256,19 @@ static u_int64_t slide8(rabinpoly_t *rp, u_char m) {
 	return rp->fingerprint = append8 (rp, rp->fingerprint ^ rp->U[om], m);
 }
 
-static u_int64_t append8(rabinpoly_t *rp, u_int64_t p, u_char m) { 	
+static u_int64_t append8(RabinPoly *rp, u_int64_t p, u_char m) { 	
 	return ((p << 8) | m) ^ rp->T[p >> rp->shift]; 
 }
 
 
 /*
  
-    rabin_init() -- Initialize the rabinpoly_t structure
+    rp_init() -- Initialize the RabinPoly structure
   
     Call this first to create a state container to be passed to the
     other library functions.  You'll later need to free all of the
     memory associated with this container by passing it to
-    rabin_free(). 
+    rp_free(). 
 
     Args:
     -----
@@ -295,18 +295,18 @@ static u_int64_t append8(rabinpoly_t *rp, u_int64_t p, u_char m) {
     --------------
   
     rp 
-        Pointer to the rabin_poly_t structure we've allocated
+        Pointer to the RabinPoly structure we've allocated
   
     NULL 
         Either malloc or arg error XXX need better error codes
 
 */
 
-rabinpoly_t *rabin_init(unsigned int window_size,
+RabinPoly *rp_init(unsigned int window_size,
 						size_t avg_block_size, 
 						size_t min_block_size,
 						size_t max_block_size) {
-	rabinpoly_t *rp;
+	RabinPoly *rp;
 
 	if (!min_block_size || !avg_block_size || !max_block_size ||
 		(min_block_size > avg_block_size) ||
@@ -315,7 +315,7 @@ rabinpoly_t *rabin_init(unsigned int window_size,
 		return NULL;
 	}
 
-	rp = (rabinpoly_t *)malloc(sizeof(rabinpoly_t));
+	rp = (RabinPoly *)malloc(sizeof(RabinPoly));
 	if (!rp) {
 		return NULL;
 	}
@@ -332,14 +332,14 @@ rabinpoly_t *rabin_init(unsigned int window_size,
         free(rp);
 		return NULL;
 	}
-    rabin_reset(rp);
+    rp_reset(rp);
     calcT(rp);
 
     return rp;
 }
 
 
-void rabin_reset(rabinpoly_t *rp) { 
+void rp_reset(RabinPoly *rp) { 
 	rp->fingerprint = 0; 
 	rp->bufpos = -1;
 	rp->block_start = 0;
@@ -348,12 +348,12 @@ void rabin_reset(rabinpoly_t *rp) {
     rp->inbuf_pos = 0;
     rp->frag_start = 0;
     rp->frag_size = 0;
-	rp->state = RABIN_IN;
+	rp->state = RP_IN;
 	bzero ((char*) rp->buf, rp->window_size*sizeof (u_char));
 }
 
 
-void rabin_free(rabinpoly_t *rp)
+void rp_free(RabinPoly *rp)
 {
 	if (!rp) {
 		return;
@@ -367,16 +367,16 @@ void rabin_free(rabinpoly_t *rp)
 
 /* 
  
-    rabin_in() -- Input data into the rabinpoly algorithm 
+    rp_in() -- Input data into the rabinpoly algorithm 
 
-    See rabin_out() synopsis.
+    See rp_out() synopsis.
 
     Args:
     -----
 
     rp       
 
-        Pointer to the rabin_poly_t structure from rabin_init.
+        Pointer to the RabinPoly structure from rp_init.
 
     buf      
 
@@ -408,20 +408,20 @@ void rabin_free(rabinpoly_t *rp)
   
  */
 
-int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
+int rp_in(RabinPoly *rp, u_char *buf, size_t size) {
 
 	if (!rp || !buf) {
 		return 0;
 	}
 
-	assert (rp->state & RABIN_IN);
+	assert (rp->state & RP_IN);
 
     rp->inbuf = buf;
     rp->inbuf_size = size;
     rp->inbuf_pos = 0;
     rp->frag_start = 0;
     rp->frag_size = 0;
-	rp->state = RABIN_OUT;
+	rp->state = RP_OUT;
 
     return 1;
 }
@@ -429,7 +429,7 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
 
 /* 
  
-    rabin_out() -- Generate output from the rabinpoly algorithm
+    rp_out() -- Generate output from the rabinpoly algorithm
 
 
     Synopsis (in pseudo code):
@@ -437,12 +437,12 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
 
 	XXX
 
-        rp = rabin_init(...)
+        rp = rp_init(...)
 		hash.reset()
         while buf = file.read(size):
             eof = len(buf) < size
-            rabin_in(rp, buf, size, eof)
-            while rabin_out(rp):
+            rp_in(rp, buf, size, eof)
+            while rp_out(rp):
                 hash.append(rp->frag_start, rp->frag_size)
                 if rp->block_done:
                     do something with rp->block_start
@@ -452,7 +452,7 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
 			if rp->eof:
 				break
 
-    Each call to rabin_out() returns a boolean indicating whether or
+    Each call to rp_out() returns a boolean indicating whether or
     not we have processed all the bytes in our input buffer. 
 
     When we find a block boundary, then we return 1.  We set
@@ -461,12 +461,12 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
     max_block_size, or shorter than min_block_size.  We will attempt
     to return blocks with an average length of avg_block_size.
 
-    If caller passed an incomplete block to rabin_in() and did not set
+    If caller passed an incomplete block to rp_in() and did not set
     eof, then we return 0.  We don't set rp->block_done.  We set
     rp->block_size to the subtotal of all fragments so far in this
     block.
 
-    if caller passed eof=1 to rabin_in(), then we set rp->eof when we
+    if caller passed eof=1 to rp_in(), then we set rp->eof when we
     return the last block.
 
     We always set rp->frag_start and rp->frag_size, to aid the caller
@@ -479,7 +479,7 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
 
     rp       
 
-        Pointer to the rabin_poly_t structure from rabin_init.
+        Pointer to the RabinPoly structure from rp_init.
 
 
     Return values:
@@ -487,51 +487,51 @@ int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size) {
 
 	Return value is a bitmask composed of:
 
-	RABIN_IN
+	RP_IN
 
 		Caller must load rp->inbuf with new input data by calling
-		rabin_in(), then call rabin_out() again.  
+		rp_in(), then call rp_out() again.  
 
-	PROCESS_FRAGMENT
+	RP_PROCESS_FRAGMENT
 
 		Caller must process the current fragment (e.g. update block
-		hash), then call rabin_out() again.  
+		hash), then call rp_out() again.  
 
-	PROCESS_BLOCK
+	RP_PROCESS_BLOCK
 
 		Caller must process the completed block (e.g. finalize block
-		hash and do something with it), then call rabin_out()
+		hash and do something with it), then call rp_out()
 		again.  
 
-	RABIN_RESET
+	RP_RESET
 
 		End of stream.  Caller should clean up (close files etc.) and
-		must not call rabin_out() again without a rabin_reset() first.
+		must not call rp_out() again without a rp_reset() first.
 			
  */
 
-int rabin_out(rabinpoly_t *rp) {
+int rp_out(RabinPoly *rp) {
 
 	// reminder: rp->state is what we last returned to the caller, so
 	// what we're checking here is actually the previous state.
 	
-	assert (!(rp->state & RABIN_IN));
-	assert (!(rp->state & RABIN_RESET));
-	assert (rp->state & RABIN_OUT);
+	assert (!(rp->state & RP_IN));
+	assert (!(rp->state & RP_RESET));
+	assert (rp->state & RP_OUT);
 
 	// if (rp->inbuf_pos == rp->inbuf_size) {
 	if (!rp->inbuf_size) {
 		/* end of file */
-		rp->state = RABIN_RESET;
+		rp->state = RP_RESET;
 		return 1;
 	}
 
-	if (PROCESS_FRAGMENT & rp->state) {
+	if (RP_PROCESS_FRAGMENT & rp->state) {
 		rp->frag_start = rp->inbuf_pos;
 		rp->frag_size = 0;
 	}
 
-	if (PROCESS_BLOCK & rp->state) {
+	if (RP_PROCESS_BLOCK & rp->state) {
 		rp->block_start += rp->block_size;
 		rp->block_size = 0;
 	}
@@ -565,9 +565,9 @@ int rabin_out(rabinpoly_t *rp) {
         // printf("%d %d\n", rp->inbuf_pos, rp->inbuf_size);
         if (rp->inbuf_pos == rp->inbuf_size) {
 			/* end of buffer */
-			rp->state = RABIN_IN;
+			rp->state = RP_IN;
 			if (rp->frag_size > 0) {
-				rp->state |= PROCESS_FRAGMENT;
+				rp->state |= RP_PROCESS_FRAGMENT;
 			}
 			return 1;
 		}
@@ -585,7 +585,7 @@ int rabin_out(rabinpoly_t *rp) {
 
         if (rp->block_size == rp->max_block_size) {
             /* full block */
-			rp->state = PROCESS_FRAGMENT | PROCESS_BLOCK | RABIN_OUT;
+			rp->state = RP_PROCESS_FRAGMENT | RP_PROCESS_BLOCK | RP_OUT;
 			return 1;
         }
 	
@@ -607,7 +607,7 @@ int rabin_out(rabinpoly_t *rp) {
 
 		if((rp->fingerprint & rp->fingerprint_mask) == rp->fingerprint_mask) {
             /* fingerprint boundary found */
-			rp->state = PROCESS_FRAGMENT | PROCESS_BLOCK | RABIN_OUT;
+			rp->state = RP_PROCESS_FRAGMENT | RP_PROCESS_BLOCK | RP_OUT;
 			return 1;
         }
 	}

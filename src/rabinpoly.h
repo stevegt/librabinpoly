@@ -30,14 +30,13 @@
 
 #include <sys/types.h>
 
-#define RABIN_IN          1
-#define RABIN_OUT         2
-#define PROCESS_FRAGMENT  4
-#define PROCESS_BLOCK     8
-#define RABIN_RESET      16
+#define RP_IN                   1
+#define RP_OUT                  2
+#define RP_PROCESS_FRAGMENT     4
+#define RP_PROCESS_BLOCK        8
+#define RP_RESET               16
 
-// XXX remove struct name
-struct rabinpoly {
+typedef struct {
 	u_int64_t poly;						// Actual polynomial
 	unsigned int window_size;			// in bytes
 	size_t avg_block_size;	    // in bytes
@@ -65,19 +64,16 @@ struct rabinpoly {
   	int shift;
 	u_int64_t T[256];		// Lookup table for mod
 	u_int64_t U[256];
-};
-// XXX rename rabinpoly_t, move to tail of struct decl 
-typedef struct rabinpoly rabinpoly_t;
+} RabinPoly;
 
-
-extern rabinpoly_t *rabin_init(unsigned int window_size,
+extern RabinPoly *rp_init(unsigned int window_size,
 						size_t avg_block_size, 
 						size_t min_block_size,
 						size_t max_block_size);
-extern void rabin_reset(rabinpoly_t *rp);
-extern void rabin_free(rabinpoly_t *rp);
-extern int rabin_in(rabinpoly_t *rp, u_char *buf, size_t size);
-extern int rabin_out(rabinpoly_t *rp);
+extern void rp_reset(RabinPoly *rp);
+extern void rp_free(RabinPoly *rp);
+extern int rp_in(RabinPoly *rp, u_char *buf, size_t size);
+extern int rp_out(RabinPoly *rp);
 
 #endif /* !_RABINPOLY_H_ */
 

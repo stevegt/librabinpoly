@@ -10,7 +10,7 @@ min_segment_size = 1024
 avg_segment_size = 8192
 max_segment_size = 65536
 
-rp = lib.rabin_init(
+rp = lib.rp_init(
 		window_size, avg_segment_size, min_segment_size, max_segment_size)
 rpc = rp.contents
 
@@ -22,20 +22,20 @@ for i in range(buf_size):
 	buf[i] = chr(0)
 # buf[0] = chr(0x01);
 
-lib.rabin_reset(rp)
+lib.rp_reset(rp)
 i = 0
-rc = lib.rabin_in(rp, buf, buf_size)
+rc = lib.rp_in(rp, buf, buf_size)
 assert rc == 1
 while True:
-	if rpc.state & lib.RABIN_IN: 
-		rc = lib.rabin_in(rp, buf, 0)
+	if rpc.state & lib.RP_IN: 
+		rc = lib.rp_in(rp, buf, 0)
 		assert rc == 1
-	if rpc.state & lib.RABIN_OUT: 
-		rc = lib.rabin_out(rp)
+	if rpc.state & lib.RP_OUT: 
+		rc = lib.rp_out(rp)
 		assert rc == 1
-	if rpc.state & lib.PROCESS_FRAGMENT:
+	if rpc.state & lib.RP_PROCESS_FRAGMENT:
 		print rpc.inbuf_pos, rpc.inbuf_size, rpc.block_size, rpc.state
-		assert rpc.state & lib.PROCESS_BLOCK, rpc.state
+		assert rpc.state & lib.RP_PROCESS_BLOCK, rpc.state
 		count = rpc.frag_size
 		assert count > 0
 		assert count == rpc.block_size 
@@ -48,10 +48,10 @@ while True:
 		assert h == 'fcd6bcb56c1689fcef28b57c22475bad'
 		print h
 		i += 1
-	if rpc.state & lib.RABIN_RESET: 
+	if rpc.state & lib.RP_RESET: 
 		break
 
 print i
 assert i == 8
 
-lib.rabin_free(rp)
+lib.rp_free(rp)

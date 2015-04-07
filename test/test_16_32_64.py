@@ -12,7 +12,7 @@ max_block_size = 65536
 buf_size = 512*1024
 buf = create_string_buffer(buf_size)
 
-rp = lib.rabin_init(window_size, 
+rp = lib.rp_init(window_size, 
 			avg_block_size, min_block_size, max_block_size)
 rpc = rp.contents
 
@@ -23,19 +23,19 @@ for i in range(buf_size):
 
 def Split(rp, buf, buf_size):
 	while True:
-		if rpc.state & lib.RABIN_IN:
+		if rpc.state & lib.RP_IN:
 			print rpc.state
 			bs = cast(addressof(buf), c_char_p)
-			rc = lib.rabin_in(rp, bs, buf_size, 0)
+			rc = lib.rp_in(rp, bs, buf_size, 0)
 			assert rc == 1
-		if rpc.state & lib.RABIN_OUT:
-			rc = lib.rabin_out(rp)
+		if rpc.state & lib.RP_OUT:
+			rc = lib.rp_out(rp)
 			assert rc == 1
-		if rpc.state & lib.PROCESS_FRAGMENT:
+		if rpc.state & lib.RP_PROCESS_FRAGMENT:
 			yield rpc.block_size
-		if rpc.state & lib.PROCESS_BLOCK:
+		if rpc.state & lib.RP_PROCESS_BLOCK:
 			pass
-		if rpc.state & lib.RABIN_RESET:
+		if rpc.state & lib.RP_RESET:
 			return;
 
 refs = [
@@ -62,6 +62,6 @@ for ref in refs:
 	size = fragments.next()
 	assert length == size
 	if block_done:
-		assert rpc.state & lib.PROCESS_BLOCK 
+		assert rpc.state & lib.RP_PROCESS_BLOCK 
 
-lib.rabin_free(rp)
+lib.rp_free(rp)

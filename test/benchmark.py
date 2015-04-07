@@ -23,7 +23,7 @@ max_block_size = 2**16
 buf_size = max_block_size*2
 
 def run():
-    rp = lib.rabin_init(
+    rp = lib.rp_init(
        window_size, avg_block_size, min_block_size, max_block_size)
     rpc = rp.contents
 
@@ -33,19 +33,19 @@ def run():
 
     total_size = 0
     while True:
-        if rpc.state & lib.RABIN_IN:
+        if rpc.state & lib.RP_IN:
             fread_size = fread(buf, 1, buf_size, fh)
-            rc = lib.rabin_in(rp, buf, fread_size)
+            rc = lib.rp_in(rp, buf, fread_size)
             assert rc == 1
-        if rpc.state & lib.RABIN_OUT:
-            rc = lib.rabin_out(rp)
+        if rpc.state & lib.RP_OUT:
+            rc = lib.rp_out(rp)
             assert rc == 1
             total_size += rpc.frag_size
-        if rpc.state & lib.RABIN_RESET:
+        if rpc.state & lib.RP_RESET:
             assert feof(fh)
             break
 
-    lib.rabin_free(rp)
+    lib.rp_free(rp)
     print total_size
 
 

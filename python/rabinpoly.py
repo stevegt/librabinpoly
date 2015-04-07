@@ -617,11 +617,11 @@ u_char = __u_char # /usr/include/i386-linux-gnu/sys/types.h: 33
 
 u_int64_t = c_ulonglong # /usr/include/i386-linux-gnu/sys/types.h: 179
 
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 41
-class struct_rabinpoly(Structure):
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 67
+class struct_anon_16(Structure):
     pass
 
-struct_rabinpoly.__slots__ = [
+struct_anon_16.__slots__ = [
     'poly',
     'window_size',
     'avg_block_size',
@@ -643,20 +643,20 @@ struct_rabinpoly.__slots__ = [
     'T',
     'U',
 ]
-struct_rabinpoly._fields_ = [
+struct_anon_16._fields_ = [
     ('poly', u_int64_t),
     ('window_size', c_uint),
-    ('avg_block_size', c_ulong),
-    ('min_block_size', c_ulong),
-    ('max_block_size', c_ulong),
+    ('avg_block_size', c_size_t),
+    ('min_block_size', c_size_t),
+    ('max_block_size', c_size_t),
     ('state', c_int),
-    ('frag_start', c_ulong),
-    ('frag_size', c_ulong),
-    ('block_start', c_ulong),
-    ('block_size', c_ulong),
+    ('frag_start', c_size_t),
+    ('frag_size', c_size_t),
+    ('block_start', c_size_t),
+    ('block_size', c_size_t),
     ('inbuf', POINTER(u_char)),
-    ('inbuf_pos', c_ulong),
-    ('inbuf_size', c_ulong),
+    ('inbuf_pos', c_size_t),
+    ('inbuf_size', c_size_t),
     ('fingerprint', u_int64_t),
     ('fingerprint_mask', u_int64_t),
     ('buf', POINTER(u_char)),
@@ -666,69 +666,67 @@ struct_rabinpoly._fields_ = [
     ('U', u_int64_t * 256),
 ]
 
-rabinpoly_t = struct_rabinpoly # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 71
+RabinPoly = struct_anon_16 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 67
+
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 69
+if hasattr(_libs['rabinpoly'], 'rp_init'):
+    rp_init = _libs['rabinpoly'].rp_init
+    rp_init.argtypes = [c_uint, c_size_t, c_size_t, c_size_t]
+    rp_init.restype = POINTER(RabinPoly)
+
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 73
+if hasattr(_libs['rabinpoly'], 'rp_reset'):
+    rp_reset = _libs['rabinpoly'].rp_reset
+    rp_reset.argtypes = [POINTER(RabinPoly)]
+    rp_reset.restype = None
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 74
-if hasattr(_libs['rabinpoly'], 'rabin_init'):
-    rabin_init = _libs['rabinpoly'].rabin_init
-    rabin_init.argtypes = [c_uint, c_ulong, c_ulong, c_ulong]
-    rabin_init.restype = POINTER(rabinpoly_t)
+if hasattr(_libs['rabinpoly'], 'rp_free'):
+    rp_free = _libs['rabinpoly'].rp_free
+    rp_free.argtypes = [POINTER(RabinPoly)]
+    rp_free.restype = None
 
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 78
-if hasattr(_libs['rabinpoly'], 'rabin_reset'):
-    rabin_reset = _libs['rabinpoly'].rabin_reset
-    rabin_reset.argtypes = [POINTER(rabinpoly_t)]
-    rabin_reset.restype = None
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 75
+if hasattr(_libs['rabinpoly'], 'rp_in'):
+    rp_in = _libs['rabinpoly'].rp_in
+    rp_in.argtypes = [POINTER(RabinPoly), POINTER(u_char), c_size_t]
+    rp_in.restype = c_int
 
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 79
-if hasattr(_libs['rabinpoly'], 'rabin_free'):
-    rabin_free = _libs['rabinpoly'].rabin_free
-    rabin_free.argtypes = [POINTER(rabinpoly_t)]
-    rabin_free.restype = None
-
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 80
-if hasattr(_libs['rabinpoly'], 'rabin_in'):
-    rabin_in = _libs['rabinpoly'].rabin_in
-    rabin_in.argtypes = [POINTER(rabinpoly_t), POINTER(u_char), c_ulong]
-    rabin_in.restype = c_int
-
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 81
-if hasattr(_libs['rabinpoly'], 'rabin_out'):
-    rabin_out = _libs['rabinpoly'].rabin_out
-    rabin_out.argtypes = [POINTER(rabinpoly_t)]
-    rabin_out.restype = c_int
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 76
+if hasattr(_libs['rabinpoly'], 'rp_out'):
+    rp_out = _libs['rabinpoly'].rp_out
+    rp_out.argtypes = [POINTER(RabinPoly)]
+    rp_out.restype = c_int
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 33
 try:
-    RABIN_IN = 1
+    RP_IN = 1
 except:
     pass
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 34
 try:
-    RABIN_OUT = 2
+    RP_OUT = 2
 except:
     pass
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 35
 try:
-    PROCESS_FRAGMENT = 4
+    RP_PROCESS_FRAGMENT = 4
 except:
     pass
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 36
 try:
-    PROCESS_BLOCK = 8
+    RP_PROCESS_BLOCK = 8
 except:
     pass
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 37
 try:
-    RABIN_RESET = 16
+    RP_RESET = 16
 except:
     pass
-
-rabinpoly = struct_rabinpoly # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 41
 
 # No inserted files
 

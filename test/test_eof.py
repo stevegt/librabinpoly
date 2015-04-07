@@ -13,7 +13,7 @@ min_block_size = 1024
 avg_block_size = 8192
 max_block_size = 65536
 
-rp = lib.rabin_init(
+rp = lib.rp_init(
 		window_size, avg_block_size, min_block_size, max_block_size)
 rpc = rp.contents
 
@@ -44,20 +44,20 @@ def teof(mf_size):
 	mf = mkmf(mf_size)
 	eof = 0
 	while True:
-		if rpc.state & lib.RABIN_IN:
+		if rpc.state & lib.RP_IN:
 			txt = mf.read(max_block_size)
 			if len(txt) < max_block_size:
 				eof = 1
 			buf = create_string_buffer(txt)
-			rc = lib.rabin_in(rp, buf, len(txt))
+			rc = lib.rp_in(rp, buf, len(txt))
 			assert rc == 1
-		if rpc.state & lib.RABIN_OUT:
-			rc = lib.rabin_out(rp)
+		if rpc.state & lib.RP_OUT:
+			rc = lib.rp_out(rp)
 			assert rc == 1
-		if rpc.state & lib.RABIN_RESET:
+		if rpc.state & lib.RP_RESET:
 			assert eof == 1
 			break
-	lib.rabin_reset(rp)
+	lib.rp_reset(rp)
 
 teof(127)
 teof(min_block_size-1)
@@ -76,4 +76,4 @@ teof(max_block_size+1)
 teof(82748)
 
 
-lib.rabin_free(rp)
+lib.rp_free(rp)
