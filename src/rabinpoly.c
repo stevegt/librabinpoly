@@ -163,8 +163,8 @@ static void polymult (u_int64_t *php, u_int64_t *plp, u_int64_t x, u_int64_t y);
 static u_int64_t polymmult (u_int64_t x, u_int64_t y, u_int64_t d);
 
 static void calcT(RabinPoly *rp);
-static u_int64_t slide8(RabinPoly *rp, u_char m);
-static u_int64_t append8(RabinPoly *rp, u_int64_t p, u_char m);
+static u_int64_t slide8(RabinPoly *rp, unsigned char m);
+static u_int64_t append8(RabinPoly *rp, u_int64_t p, unsigned char m);
 
 /*
      functions to calculate the rabin hash
@@ -246,17 +246,17 @@ static void calcT(RabinPoly *rp) {
    fingerprint.
  */
 
-static u_int64_t slide8(RabinPoly *rp, u_char m) { 
+static u_int64_t slide8(RabinPoly *rp, unsigned char m) { 
     rp->bufpos++;
 	if (rp->bufpos >= rp->window_size) {
 		rp->bufpos = 0;
 	}
-	u_char om = rp->buf[rp->bufpos];
+	unsigned char om = rp->buf[rp->bufpos];
 	rp->buf[rp->bufpos] = m;
 	return rp->fingerprint = append8 (rp, rp->fingerprint ^ rp->U[om], m);
 }
 
-static u_int64_t append8(RabinPoly *rp, u_int64_t p, u_char m) { 	
+static u_int64_t append8(RabinPoly *rp, u_int64_t p, unsigned char m) { 	
 	return ((p << 8) | m) ^ rp->T[p >> rp->shift]; 
 }
 
@@ -327,7 +327,7 @@ RabinPoly *rp_init(unsigned int window_size,
 	rp->max_block_size = max_block_size;
 	rp->fingerprint_mask = (1 << (fls32(rp->avg_block_size)-1))-1;
 
-	rp->buf = (u_char *)malloc(rp->window_size*sizeof(u_char));
+	rp->buf = (unsigned char *)malloc(rp->window_size*sizeof(unsigned char));
 	if (!rp->buf){
         free(rp);
 		return NULL;
@@ -349,7 +349,7 @@ void rp_reset(RabinPoly *rp) {
     rp->frag_start = 0;
     rp->frag_size = 0;
 	rp->state = RP_IN;
-	bzero ((char*) rp->buf, rp->window_size*sizeof (u_char));
+	bzero ((char*) rp->buf, rp->window_size*sizeof (unsigned char));
 }
 
 
@@ -408,7 +408,7 @@ void rp_free(RabinPoly *rp)
   
  */
 
-int rp_in(RabinPoly *rp, u_char *buf, size_t size) {
+int rp_in(RabinPoly *rp, unsigned char *buf, size_t size) {
 
 	if (!rp || !buf) {
 		return 0;

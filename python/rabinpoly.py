@@ -611,10 +611,6 @@ _libs["rabinpoly"] = load_library("rabinpoly")
 
 # No modules
 
-__u_char = c_ubyte # /usr/include/i386-linux-gnu/bits/types.h: 30
-
-u_char = __u_char # /usr/include/i386-linux-gnu/sys/types.h: 33
-
 u_int64_t = c_ulonglong # /usr/include/i386-linux-gnu/sys/types.h: 179
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 67
@@ -654,12 +650,12 @@ struct_anon_16._fields_ = [
     ('frag_size', c_size_t),
     ('block_start', c_size_t),
     ('block_size', c_size_t),
-    ('inbuf', POINTER(u_char)),
+    ('inbuf', POINTER(c_ubyte)),
     ('inbuf_pos', c_size_t),
     ('inbuf_size', c_size_t),
     ('fingerprint', u_int64_t),
     ('fingerprint_mask', u_int64_t),
-    ('buf', POINTER(u_char)),
+    ('buf', POINTER(c_ubyte)),
     ('bufpos', c_uint),
     ('shift', c_int),
     ('T', u_int64_t * 256),
@@ -689,7 +685,7 @@ if hasattr(_libs['rabinpoly'], 'rp_free'):
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 75
 if hasattr(_libs['rabinpoly'], 'rp_in'):
     rp_in = _libs['rabinpoly'].rp_in
-    rp_in.argtypes = [POINTER(RabinPoly), POINTER(u_char), c_size_t]
+    rp_in.argtypes = [POINTER(RabinPoly), POINTER(c_ubyte), c_size_t]
     rp_in.restype = c_int
 
 # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 76

@@ -51,14 +51,14 @@ typedef struct {
 	size_t block_start;	    // block start position in input stream 
 	size_t block_size;	    // size of the current active block 
 
-	u_char *inbuf;  				// input buffer
+	unsigned char *inbuf;  				// input buffer
 	size_t inbuf_pos;    	// current position in input buffer
 	size_t inbuf_size;   	// size of input buffer
 
 	u_int64_t fingerprint;		// current rabin fingerprint
 	u_int64_t fingerprint_mask;	// to check if we are at block boundary
 
-	u_char *buf;				// circular buffer of size 'window_size'
+	unsigned char *buf;				// circular buffer of size 'window_size'
 	unsigned int bufpos;		// current position in circular buffer
 
   	int shift;
@@ -72,23 +72,8 @@ extern RabinPoly *rp_init(unsigned int window_size,
 						size_t max_block_size);
 extern void rp_reset(RabinPoly *rp);
 extern void rp_free(RabinPoly *rp);
-extern int rp_in(RabinPoly *rp, u_char *buf, size_t size);
+extern int rp_in(RabinPoly *rp, unsigned char *buf, size_t size);
 extern int rp_out(RabinPoly *rp);
 
 #endif /* !_RABINPOLY_H_ */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
