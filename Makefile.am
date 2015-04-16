@@ -43,5 +43,5 @@ lint:
 	cppcheck --enable=all src/*.c src/*.h
 	make clean && scan-build -V make
 
-python/rabinpoly.py:
+python/rabinpoly.py: src/rabinpoly.h
 	ctypesgen.py -L $(LD_LIBRARY_PATH) -l rabinpoly -o python/rabinpoly.py $(CURDIR)/src/rabinpoly.h

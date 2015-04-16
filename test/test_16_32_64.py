@@ -3,23 +3,53 @@
 from ctypes import *
 import random
 
-import rabinpoly as lib
+from rabinpoly import *
+# http://code.google.com/p/ctypesgen/issues/detail?id=13
+CBFUNC = CFUNCTYPE(UNCHECKED(c_int), POINTER(struct_RabinPoly))
 
-window_size = 32
-min_block_size = 16384
-avg_block_size = 32768
-max_block_size = 65536
-buf_size = 512*1024
-buf = create_string_buffer(buf_size)
+class RabinPoly(object):
 
-rp = lib.rp_init(window_size, 
-			avg_block_size, min_block_size, max_block_size)
-rpc = rp.contents
+	def __init__(self, window_size, 
+			min_block_size, avg_block_size, max_block_size, buf_size):
+		self.rp = rp_new(window_size, 
+					avg_block_size, min_block_size, max_block_size, buf_size)
+		self.rpc = self.rp.contents
+		self.rpc.func_stream_read = CBFUNC(self.stream_read)
+		self.rpc.func_block_start = CBFUNC(self.block_start)
+		self.filled = False
+		self.ctr = 0
 
-random.seed(42)
+	def stream_process(self, stream):
+		rp_stream_process(self.rp, stream)
 
-for i in range(buf_size):
-	buf[i] = chr(random.randrange(0,256))
+	def stream_read(self, rp):
+		if self.filled:
+			return -1
+		random.seed(42)
+		for i in range(self.rpc.buf_size):
+			self.rpc.inbuf[i] = random.randrange(0,256)
+		self.filled = True
+		self.rpc.inbuf_read_count = buf_size
+		self.ctr += 1
+		print 'read done'
+		return 0
+
+	def block_start(self, rp):
+		print 'hello'
+		self.ctr += 1
+		return 0
+
+rp = RabinPoly(
+		window_size = 32,
+		min_block_size = 16384,
+		avg_block_size = 32768,
+		max_block_size = 65536,
+		buf_size = 512*1024,
+	)
+
+rp.stream_process(None)
+print rp.ctr
+
 
 def Split(rp, buf, buf_size):
 	while True:

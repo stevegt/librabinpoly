@@ -28,52 +28,54 @@
 #ifndef _RABINPOLY_H_
 #define _RABINPOLY_H_ 
 
+#include <stdio.h>
 #include <sys/types.h>
 
-#define RP_IN                   1
-#define RP_OUT                  2
-#define RP_PROCESS_FRAGMENT     4
-#define RP_PROCESS_BLOCK        8
-#define RP_RESET               16
-
-typedef struct {
+typedef struct RabinPoly {
 	u_int64_t poly;						// Actual polynomial
 	unsigned int window_size;			// in bytes
 	size_t avg_block_size;	    // in bytes
 	size_t min_block_size;	    // in bytes
 	size_t max_block_size;	    // in bytes
 
-	int state;	        
+	int error;
+	FILE *stream;
 
-	size_t frag_start;	    // fragment start position in input buffer
-	size_t frag_size;	    // size of the current fragment
+	unsigned char *fragment_addr;	 // fragment start address
+	size_t fragment_size;	    // size of the current fragment
 
-	size_t block_start;	    // block start position in input stream 
+	size_t block_streampos;	    // block start position in input stream 
 	size_t block_size;	    // size of the current active block 
 
-	unsigned char *inbuf;  				// input buffer
-	size_t inbuf_pos;    	// current position in input buffer
-	size_t inbuf_size;   	// size of input buffer
+	unsigned char *inbuf;  		// input buffer
+	size_t inbuf_pos;    	    // current position in input buffer
+	size_t inbuf_size;   	    // size of input buffer
+	size_t inbuf_read_count;   	// most recently loaded input data byte count
 
 	u_int64_t fingerprint;		// current rabin fingerprint
 	u_int64_t fingerprint_mask;	// to check if we are at block boundary
 
-	unsigned char *buf;				// circular buffer of size 'window_size'
-	unsigned int bufpos;		// current position in circular buffer
+	unsigned char *circbuf;				// circular buffer of size 'window_size'
+	unsigned int circbuf_pos;		// current position in circular buffer
 
   	int shift;
 	u_int64_t T[256];		// Lookup table for mod
 	u_int64_t U[256];
+
+    int (*func_block_start)(struct RabinPoly*);
+    int (*func_block_end)(struct RabinPoly*);
+    int (*func_fragment_end)(struct RabinPoly*);
+    int (*func_stream_read)(struct RabinPoly*);
+
 } RabinPoly;
 
-extern RabinPoly *rp_init(unsigned int window_size,
+extern RabinPoly *rp_new(unsigned int window_size,
 						size_t avg_block_size, 
 						size_t min_block_size,
-						size_t max_block_size);
-extern void rp_reset(RabinPoly *rp);
+						size_t max_block_size,
+                        size_t inbuf_size);
+extern int rp_stream_process(RabinPoly *rp, FILE *stream);
 extern void rp_free(RabinPoly *rp);
-extern int rp_in(RabinPoly *rp, unsigned char *buf, size_t size);
-extern int rp_out(RabinPoly *rp);
 
 #endif /* !_RABINPOLY_H_ */
 
