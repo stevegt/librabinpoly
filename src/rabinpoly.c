@@ -45,14 +45,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-inline int rp_stream_read(RabinPoly *rp);
-static inline void rp_stream_reset(RabinPoly *rp);
-static inline void rp_inbuf_reset(RabinPoly *rp);
-static inline void rp_block_reset(RabinPoly *rp);
-static inline void rp_fragment_reset(RabinPoly *rp);
-
-static inline int rp_noop(RabinPoly *rp) {return 0;}
-
+static inline void rp_find_block_end(RabinPoly *rp);
 
 /*
  * Routines for calculating the most significant bit of an integer.
@@ -325,6 +318,7 @@ RabinPoly* rp_new(unsigned int window_size,
 	if (!min_block_size || !avg_block_size || !max_block_size ||
 		(min_block_size > avg_block_size) ||
 		(max_block_size < avg_block_size) ||
+		(inbuf_size < max_block_size*2) ||
 		(window_size < DEFAULT_WINDOW_SIZE)) {
 		return NULL;
 	}
@@ -342,11 +336,6 @@ RabinPoly* rp_new(unsigned int window_size,
 	rp->max_block_size = max_block_size;
 	rp->fingerprint_mask = (1 << (fls32(rp->avg_block_size)-1))-1;
 
-    rp->func_block_start = rp_noop;
-    rp->func_block_end = rp_noop;
-    rp->func_fragment_end = rp_noop;
-    rp->func_stream_read = rp_stream_read;
-
 	rp->circbuf = (unsigned char *)malloc(rp->window_size*sizeof(unsigned char));
 	if (!rp->circbuf){
         free(rp);
@@ -360,7 +349,8 @@ RabinPoly* rp_new(unsigned int window_size,
 		return NULL;
 	}
 
-    rp_stream_reset(rp);
+    rp_from_stream(rp, NULL);
+    rp->func_stream_read = rp_stream_read;
 
     calcT(rp);
 
@@ -378,167 +368,150 @@ void rp_free(RabinPoly *rp)
 	rp = NULL;
 }
 
+void rp_from_buffer(RabinPoly *rp, unsigned char *src, size_t size) { 
+	rp_from_stream(rp, NULL);
+	assert(size <= rp->inbuf_size);
+	memcpy(rp->inbuf, src, size);
+	rp->inbuf_data_size = size;
+    rp->func_stream_read = NULL;
+    rp->buffer_only = 1;
+}
 
-static inline void rp_stream_reset(RabinPoly *rp) { 
+void rp_from_file(RabinPoly *rp, const char *path) {
+	FILE *stream = fopen(path, "rb");
+	if (!stream) {
+		rp->error = errno;
+	}
+	rp_from_stream(rp, stream);
+}
+
+void rp_from_stream(RabinPoly *rp, FILE *stream) { 
+    rp->stream = stream;
+    rp->error = 0;
+    rp->buffer_only = 0;
+    rp->inbuf_data_size = 0;
+	rp->block_size = 0;
+	rp->block_streampos = 0;
+    rp->block_addr = rp->inbuf;
 	rp->fingerprint = 0; 
 	rp->circbuf_pos = -1;
 	bzero ((char*) rp->circbuf, rp->window_size*sizeof (unsigned char));
-	rp->block_streampos = 0;
-    rp_inbuf_reset(rp);
-    rp_block_reset(rp);
 }
 
-static inline void rp_inbuf_reset(RabinPoly *rp) { 
-    rp->inbuf_pos = 0;
-    rp->inbuf_read_count = 0;
-    rp->fragment_addr = rp->inbuf;
-    rp_fragment_reset(rp);
-}
-
-static inline void rp_block_reset(RabinPoly *rp) { 
-    rp->block_streampos += rp->block_size;
-	rp->block_size = 0;
-}
-
-static inline void rp_fragment_reset(RabinPoly *rp) { 
-	rp->fragment_size = 0;
-    rp->fragment_addr = rp->inbuf + rp->inbuf_pos;
-}
-
-inline int rp_stream_read(RabinPoly *rp) {
-    rp->error = 0;
-    rp->inbuf_read_count = fread(rp->inbuf, 1, rp->inbuf_size, rp->stream);
-    if (rp->inbuf_read_count == 0) {
+size_t rp_stream_read(RabinPoly *rp, unsigned char *dst, size_t size) {
+    size_t count = fread(dst, 1, size, rp->stream);
+	rp->error = 0;
+    if (count == 0) {
         if (ferror(rp->stream)) {
             rp->error = errno;
         } else if (feof(rp->stream)) {
             rp->error = EOF;
         }
     }
-    return rp->error;
+    return count;
 }
 
+#define CUR_ADDR rp->block_addr+rp->block_size
+#define INBUF_END rp->inbuf+rp->inbuf_size
 
-#define STREAM_READ      1
-#define BLOCK_START      2
-#define BLOCK_END        4
-#define FRAGMENT_START   8
-#define FRAGMENT_END    16
-#define STOP            32
+int rp_block_next(RabinPoly *rp) {
 
-int rp_stream_process(RabinPoly *rp, FILE *stream) {
+    rp->block_streampos += rp->block_size;
+    rp->block_addr += rp->block_size;
+	rp->block_size = 0;
 
-    rp_stream_reset(rp);
-    rp->stream = stream;
+    /* 
+     * Skip early part of each block -- there appears to be no reason
+     * to checksum the first min_block_size-N bytes, because the
+     * effect of those early bytes gets flushed out pretty quickly.
+     * Setting N to 256 seems to work; not sure if that's the "right"
+     * number, but we'll use that for now.  This one optimization
+     * alone provides a 30% speedup in benchmark.py though, with no
+     * detected change in block boundary locations or fingerprints in
+     * any of the existing tests.  - stevegt
+     *
+     * @moinakg found similar results, and also seems to think 256 is
+     * right: https://moinakg.wordpress.com/tag/rolling-hash/
+     *
+    */
+    size_t skip = rp->min_block_size - 256;
+    size_t data_remaining = rp->inbuf_data_size - (rp->block_addr - rp->inbuf);
+    if ((data_remaining > rp->min_block_size+1) && 
+            (rp->min_block_size > 512)) {
+        rp->block_size += skip;
+    }
 
-    int rc, read_rc;
-    int state = STREAM_READ | BLOCK_START | FRAGMENT_START;
-    for (;;) {
+    for(;;) {
 
-        if (state & FRAGMENT_END) {
-            state ^= FRAGMENT_END;
-            rc = rp->func_fragment_end(rp);
-            if (rc) return rc;
-            state |= FRAGMENT_START;
-        }
-
-        if (state & BLOCK_END) {
-            state ^= BLOCK_END;
-            rc = rp->func_block_end(rp);
-            if (rc) return rc;
-            state |= BLOCK_START;
-        }
-
-        if (state & STOP) {
-            return read_rc;
-        }
-
-        if (state & STREAM_READ) {
-            state ^= STREAM_READ;
-            rp_inbuf_reset(rp);
-            read_rc = rp->func_stream_read(rp);
-            if (read_rc) {
-                state |= FRAGMENT_END | BLOCK_END | STOP;
-            }
-        }
-
-        if (state & FRAGMENT_START) {
-            state ^= FRAGMENT_START;
-            rp_fragment_reset(rp);
-        }
-
-        if (state & BLOCK_START) {
-            state ^= BLOCK_START;
-            rp_block_reset(rp);
-            rc = rp->func_block_start(rp);
-            if (rc) return rc;
-            /* 
-             * Skip early part of each block -- there appears to be no reason
-             * to checksum the first min_block_size-N bytes, because the
-             * effect of those early bytes gets flushed out pretty quickly.
-             * Setting N to 256 seems to work; not sure if that's the "right"
-             * number, but we'll use that for now.  This one optimization
-             * alone provides a 30% speedup in benchmark.py though, with no
-             * detected change in block boundary locations or fingerprints in
-             * any of the existing tests.  - stevegt
-             *
-             * @moinakg found similar results, and also seems to think 256 is
-             * right: https://moinakg.wordpress.com/tag/rolling-hash/
-             *
-            */
-            size_t skip = rp->min_block_size - 256;
-            if (((rp->inbuf_read_count - rp->inbuf_pos) > rp->min_block_size+1) && 
-                    (rp->min_block_size > 512)) {
-                rp->inbuf_pos += skip;
-                rp->block_size += skip;
-                rp->fragment_size += skip;
-            }
-        }
-
-        if (state) {
-            continue;
-        }
-
-        while (!state) {
-
-            if (rp->inbuf_pos == rp->inbuf_read_count) {
-                /* end of input buffer */
-                state |= FRAGMENT_END | STREAM_READ;
-                break;
-            }
-
-            if (rp->block_size == rp->max_block_size) {
-                /* full block */
-                state |= FRAGMENT_END | BLOCK_END;
-                break;
-            }
-
-            /* feed the next byte into rabinpoly algo */
-            slide8(rp, rp->inbuf[rp->inbuf_pos]);
-            rp->inbuf_pos++;
-            rp->block_size++;
-            rp->fragment_size++;
-
-            /* 
-             *  
-             * We compare the low-order fingerprint bits (LOFB) to
-             * something other than zero in order to avoid generating
-             * short blocks when scanning long strings of zeroes.
-             * Mechiel Lukkien (mjl), while working on the Plan9 gsoc,
-             * seemed to think that avg_block_size - 1 was a good value.
-             * 
-             * http://gsoc.cat-v.org/people/mjl/blog/2007/08/06/1_Rabin_fingerprints/ 
-             * 
-             * ...and since we're already using avg_block_size - 1 to set
-             * the fingerprint mask itself, then simply comparing LOFB to
-             * the mask itself will do the right thing.  
-             *  
+        if (CUR_ADDR == INBUF_END) {
+            /* end of input buffer: there's a partial block at the end
+             * of the buffer; move it to the beginning of the buffer
+             * so we can append more from input stream
              */
-            if ((rp->block_size >= rp->min_block_size) &&
-                ((rp->fingerprint & rp->fingerprint_mask) == rp->fingerprint_mask)) {
-                /* fingerprint boundary found */
-                state |= FRAGMENT_END | BLOCK_END;
-            }
+            memmove(rp->inbuf, rp->block_addr, rp->block_size);
+            rp->block_addr = rp->inbuf;
+            rp->inbuf_data_size = rp->block_size;
+        }
+
+        if (CUR_ADDR == rp->inbuf + rp->inbuf_data_size) {
+            /* no more valid data in input buffer */
+			int count = 0;
+			if (!rp->error) {
+				if (rp->buffer_only) {
+					/* don't refill buffer */
+					rp->error = EOF;
+				} else {
+					/* use func_stream_read to refill buffer */
+					int size = rp->inbuf_size - rp->inbuf_data_size;
+					assert(size > 0);
+					count = rp->func_stream_read(rp, 
+							rp->inbuf + rp->inbuf_data_size, size);
+					if (!count) {
+						assert(rp->error);
+					}
+					rp->inbuf_data_size += count;
+				}
+			}
+			if (rp->error && (count == 0)) {
+				/* we're either carrying an error from earlier, or the
+				 * func_stream_read above just threw one
+				 */
+				if (rp->block_size == 0) {
+					/* we're done. caller shouldn't call us again */
+					return rp->error;
+				} else {
+					/* give final block to caller; caller should call
+					 * us again to get e.g. eof error 
+					 */
+					return 0;
+				}
+			}
+        }
+
+        /* feed the next byte into rabinpoly algo */
+        slide8(rp, rp->block_addr[rp->block_size]);
+        rp->block_size++;
+
+        /* 
+         *  
+         * We compare the low-order fingerprint bits (LOFB) to
+         * something other than zero in order to avoid generating
+         * short blocks when scanning long strings of zeroes.
+         * Mechiel Lukkien (mjl), while working on the Plan9 gsoc,
+         * seemed to think that avg_block_size - 1 was a good value.
+         * 
+         * http://gsoc.cat-v.org/people/mjl/blog/2007/08/06/1_Rabin_fingerprints/ 
+         * 
+         * ...and since we're already using avg_block_size - 1 to set
+         * the fingerprint mask itself, then simply comparing LOFB to
+         * the mask itself will do the right thing.  
+         *  
+         */
+        if ((rp->block_size == rp->max_block_size) ||
+            ((rp->block_size >= rp->min_block_size) &&
+            ((rp->fingerprint & rp->fingerprint_mask) == rp->fingerprint_mask))) {
+            /* full block or fingerprint boundary */
+            return 0;
         }
     }
 }

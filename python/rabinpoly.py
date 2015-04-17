@@ -715,16 +715,13 @@ struct_RabinPoly.__slots__ = [
     'avg_block_size',
     'min_block_size',
     'max_block_size',
-    'error',
-    'stream',
-    'fragment_addr',
-    'fragment_size',
     'block_streampos',
+    'block_addr',
     'block_size',
     'inbuf',
     'inbuf_pos',
     'inbuf_size',
-    'inbuf_read_count',
+    'inbuf_data_size',
     'fingerprint',
     'fingerprint_mask',
     'circbuf',
@@ -732,10 +729,10 @@ struct_RabinPoly.__slots__ = [
     'shift',
     'T',
     'U',
-    'func_block_start',
-    'func_block_end',
-    'func_fragment_end',
+    'stream',
     'func_stream_read',
+    'error',
+    'buffer_only',
 ]
 struct_RabinPoly._fields_ = [
     ('poly', u_int64_t),
@@ -743,16 +740,13 @@ struct_RabinPoly._fields_ = [
     ('avg_block_size', c_size_t),
     ('min_block_size', c_size_t),
     ('max_block_size', c_size_t),
-    ('error', c_int),
-    ('stream', POINTER(FILE)),
-    ('fragment_addr', POINTER(c_ubyte)),
-    ('fragment_size', c_size_t),
     ('block_streampos', c_size_t),
+    ('block_addr', POINTER(c_ubyte)),
     ('block_size', c_size_t),
     ('inbuf', POINTER(c_ubyte)),
     ('inbuf_pos', c_size_t),
     ('inbuf_size', c_size_t),
-    ('inbuf_read_count', c_size_t),
+    ('inbuf_data_size', c_size_t),
     ('fingerprint', u_int64_t),
     ('fingerprint_mask', u_int64_t),
     ('circbuf', POINTER(c_ubyte)),
@@ -760,27 +754,51 @@ struct_RabinPoly._fields_ = [
     ('shift', c_int),
     ('T', u_int64_t * 256),
     ('U', u_int64_t * 256),
-    ('func_block_start', CFUNCTYPE(UNCHECKED(c_int), POINTER(struct_RabinPoly))),
-    ('func_block_end', CFUNCTYPE(UNCHECKED(c_int), POINTER(struct_RabinPoly))),
-    ('func_fragment_end', CFUNCTYPE(UNCHECKED(c_int), POINTER(struct_RabinPoly))),
-    ('func_stream_read', CFUNCTYPE(UNCHECKED(c_int), POINTER(struct_RabinPoly))),
+    ('stream', POINTER(FILE)),
+    ('func_stream_read', CFUNCTYPE(UNCHECKED(c_size_t), POINTER(struct_RabinPoly), POINTER(c_ubyte), c_size_t)),
+    ('error', c_int),
+    ('buffer_only', c_int),
 ]
 
-RabinPoly = struct_RabinPoly # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 70
+RabinPoly = struct_RabinPoly # /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 65
 
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 72
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 67
 if hasattr(_libs['rabinpoly'], 'rp_new'):
     rp_new = _libs['rabinpoly'].rp_new
     rp_new.argtypes = [c_uint, c_size_t, c_size_t, c_size_t, c_size_t]
     rp_new.restype = POINTER(RabinPoly)
 
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 77
-if hasattr(_libs['rabinpoly'], 'rp_stream_process'):
-    rp_stream_process = _libs['rabinpoly'].rp_stream_process
-    rp_stream_process.argtypes = [POINTER(RabinPoly), POINTER(FILE)]
-    rp_stream_process.restype = c_int
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 72
+if hasattr(_libs['rabinpoly'], 'rp_from_buffer'):
+    rp_from_buffer = _libs['rabinpoly'].rp_from_buffer
+    rp_from_buffer.argtypes = [POINTER(RabinPoly), POINTER(c_ubyte), c_size_t]
+    rp_from_buffer.restype = None
 
-# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 78
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 73
+if hasattr(_libs['rabinpoly'], 'rp_from_file'):
+    rp_from_file = _libs['rabinpoly'].rp_from_file
+    rp_from_file.argtypes = [POINTER(RabinPoly), String]
+    rp_from_file.restype = None
+
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 74
+if hasattr(_libs['rabinpoly'], 'rp_from_stream'):
+    rp_from_stream = _libs['rabinpoly'].rp_from_stream
+    rp_from_stream.argtypes = [POINTER(RabinPoly), POINTER(FILE)]
+    rp_from_stream.restype = None
+
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 75
+if hasattr(_libs['rabinpoly'], 'rp_stream_read'):
+    rp_stream_read = _libs['rabinpoly'].rp_stream_read
+    rp_stream_read.argtypes = [POINTER(RabinPoly), POINTER(c_ubyte), c_size_t]
+    rp_stream_read.restype = c_size_t
+
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 76
+if hasattr(_libs['rabinpoly'], 'rp_block_next'):
+    rp_block_next = _libs['rabinpoly'].rp_block_next
+    rp_block_next.argtypes = [POINTER(RabinPoly)]
+    rp_block_next.restype = c_int
+
+# /home/stevegt/lab/rabin/librabinpoly/src/rabinpoly.h: 77
 if hasattr(_libs['rabinpoly'], 'rp_free'):
     rp_free = _libs['rabinpoly'].rp_free
     rp_free.argtypes = [POINTER(RabinPoly)]

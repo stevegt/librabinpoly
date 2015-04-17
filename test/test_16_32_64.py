@@ -5,68 +5,40 @@ import random
 
 from rabinpoly import *
 # http://code.google.com/p/ctypesgen/issues/detail?id=13
-CBFUNC = CFUNCTYPE(UNCHECKED(c_int), POINTER(struct_RabinPoly))
+CBFUNC = CFUNCTYPE(UNCHECKED(c_size_t), POINTER(struct_RabinPoly),
+		POINTER(c_ubyte), c_size_t)
 
-class RabinPoly(object):
-
-	def __init__(self, window_size, 
-			min_block_size, avg_block_size, max_block_size, buf_size):
-		self.rp = rp_new(window_size, 
-					avg_block_size, min_block_size, max_block_size, buf_size)
-		self.rpc = self.rp.contents
-		self.rpc.func_stream_read = CBFUNC(self.stream_read)
-		self.rpc.func_block_start = CBFUNC(self.block_start)
-		self.filled = False
-		self.ctr = 0
-
-	def stream_process(self, stream):
-		rp_stream_process(self.rp, stream)
-
-	def stream_read(self, rp):
-		if self.filled:
-			return -1
+class Stream(object):
+	def __init__(self, size):
+		self.size = size
+		self.pos = 0
+		self.eof = False
+		self.buf = ''
 		random.seed(42)
-		for i in range(self.rpc.buf_size):
-			self.rpc.inbuf[i] = random.randrange(0,256)
-		self.filled = True
-		self.rpc.inbuf_read_count = buf_size
-		self.ctr += 1
-		print 'read done'
-		return 0
+	def read(self, rp, dst, size):
+		if self.eof:
+			rp.contents.error = -1
+			return 0
+		for i in range(size):
+			dst[i] = random.randrange(0,256)
+		self.pos += size
+		if self.pos == self.size:
+			self.eof = True
+		return size
 
-	def block_start(self, rp):
-		print 'hello'
-		self.ctr += 1
-		return 0
+window_size = 32
+min_block_size = 16384
+avg_block_size = 32768
+max_block_size = 65536
+buf_size = 512*1024
 
-rp = RabinPoly(
-		window_size = 32,
-		min_block_size = 16384,
-		avg_block_size = 32768,
-		max_block_size = 65536,
-		buf_size = 512*1024,
-	)
+rp = rp_new(window_size, 
+		avg_block_size, min_block_size, max_block_size, buf_size)
+rpc = rp.contents
 
-rp.stream_process(None)
-print rp.ctr
-
-
-def Split(rp, buf, buf_size):
-	while True:
-		if rpc.state & lib.RP_IN:
-			print rpc.state
-			bs = cast(addressof(buf), c_char_p)
-			rc = lib.rp_in(rp, bs, buf_size, 0)
-			assert rc == 1
-		if rpc.state & lib.RP_OUT:
-			rc = lib.rp_out(rp)
-			assert rc == 1
-		if rpc.state & lib.RP_PROCESS_FRAGMENT:
-			yield rpc.block_size
-		if rpc.state & lib.RP_PROCESS_BLOCK:
-			pass
-		if rpc.state & lib.RP_RESET:
-			return;
+stream = Stream(buf_size)
+rpc.func_stream_read = CBFUNC(stream.read)
+rp_from_stream(rp, None)
 
 refs = [
 		(22708, 1),
@@ -85,13 +57,14 @@ refs = [
 		(27624, 0),
 	]
 
-fragments = Split(rp, buf, buf_size)
 for ref in refs:
 	length = ref[0]
 	block_done = ref[1]
-	size = fragments.next()
-	assert length == size
-	if block_done:
-		assert rpc.state & lib.RP_PROCESS_BLOCK 
+	rc = rp_block_next(rp)
+	if rc:
+		print 'rc', rc
+		break
+	size = rpc.block_size
+	assert length == size, (length, size)
 
-lib.rp_free(rp)
+rp_free(rp)

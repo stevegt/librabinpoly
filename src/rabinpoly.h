@@ -38,34 +38,29 @@ typedef struct RabinPoly {
 	size_t min_block_size;	    // in bytes
 	size_t max_block_size;	    // in bytes
 
-	int error;
-	FILE *stream;
-
-	unsigned char *fragment_addr;	 // fragment start address
-	size_t fragment_size;	    // size of the current fragment
-
 	size_t block_streampos;	    // block start position in input stream 
-	size_t block_size;	    // size of the current active block 
+	unsigned char * block_addr;	// starting address of current block 
+	size_t block_size;	        // size of the current block 
 
 	unsigned char *inbuf;  		// input buffer
 	size_t inbuf_pos;    	    // current position in input buffer
 	size_t inbuf_size;   	    // size of input buffer
-	size_t inbuf_read_count;   	// most recently loaded input data byte count
+	size_t inbuf_data_size;   	// size of valid data in input buffer
 
 	u_int64_t fingerprint;		// current rabin fingerprint
 	u_int64_t fingerprint_mask;	// to check if we are at block boundary
 
-	unsigned char *circbuf;				// circular buffer of size 'window_size'
-	unsigned int circbuf_pos;		// current position in circular buffer
+	unsigned char *circbuf;	    // circular buffer of size 'window_size'
+	unsigned int circbuf_pos;	// current position in circular buffer
 
   	int shift;
-	u_int64_t T[256];		// Lookup table for mod
+	u_int64_t T[256];			// Lookup table for mod
 	u_int64_t U[256];
 
-    int (*func_block_start)(struct RabinPoly*);
-    int (*func_block_end)(struct RabinPoly*);
-    int (*func_fragment_end)(struct RabinPoly*);
-    int (*func_stream_read)(struct RabinPoly*);
+	FILE *stream; 				// input stream
+    size_t (*func_stream_read)(struct RabinPoly*, unsigned char *dst, size_t size);
+    int error; 					// input stream errno
+	int buffer_only; 			// if set, read loaded buffer only; ignore stream
 
 } RabinPoly;
 
@@ -74,7 +69,11 @@ extern RabinPoly *rp_new(unsigned int window_size,
 						size_t min_block_size,
 						size_t max_block_size,
                         size_t inbuf_size);
-extern int rp_stream_process(RabinPoly *rp, FILE *stream);
+extern void rp_from_buffer(RabinPoly *rp, unsigned char *src, size_t size);
+extern void rp_from_file(RabinPoly *rp, const char *path);
+extern void rp_from_stream(RabinPoly *rp, FILE *);
+extern size_t rp_stream_read(RabinPoly *rp, unsigned char *dst, size_t size);
+extern int rp_block_next(RabinPoly *rp);
 extern void rp_free(RabinPoly *rp);
 
 #endif /* !_RABINPOLY_H_ */

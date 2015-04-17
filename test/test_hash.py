@@ -3,44 +3,20 @@
 # import binascii
 from ctypes import *
 import hashlib
-import random
 
-import rabinpoly as lib
+from rabinpoly import *
 
 window_size = 32
 min_block_size = 1024
 avg_block_size = 8192
 max_block_size = 65536
+buf_size = 128*1024
 
-rp = lib.rp_init(
-		window_size, avg_block_size, min_block_size, max_block_size)
+rp = rp_new(window_size, 
+		avg_block_size, min_block_size, max_block_size, buf_size)
 rpc = rp.contents
 
-random.seed(42)
-buf_size = 128*1024
-buf = create_string_buffer(buf_size)
-
-class Mockfile(object):
-
-	def __init__(self):
-		self.txt = ''
-		self.pos = 0
-
-	def read(self, size):
-		txt = self.txt[self.pos:self.pos + size]
-		self.pos += len(txt)
-		return txt
-
-	def append(self, txt):
-		self.txt += txt
-
-def mkmf(size):
-	print 'building mock file...'
-	mf = Mockfile()
-	for i in range(size):
-		mf.append(chr(random.randrange(0,256)))
-	print 'done'
-	return mf
+rp_from_file(rp, 'test/data/random-42x1M.dat')
 
 hashes = [
 
@@ -179,44 +155,35 @@ hashes = [
 
 		]
 
-# mf = mkmf(int(buf_size*3.42))
-mf = open('test/data/random-42x1M.dat', 'r')
+
 
 i = 0
-ref_block_start = 0
+ref_block_streampos = 0
 hasher = hashlib.md5()
 while True:
-	if rpc.state & lib.RP_IN:
-		txt = mf.read(max_block_size)
-		buf.value = txt
-		rc = lib.rp_in(rp, buf, len(txt))
-		assert rc == 1
-	if rpc.state & lib.RP_OUT:
-		rc = lib.rp_out(rp)
-		assert rc == 1
-	if rpc.state & lib.RP_PROCESS_FRAGMENT:
-		start = rpc.frag_start
-		count = rpc.frag_size
-		assert start + count <= buf_size
-		hasher.update(buf[start:start+count])
-	if rpc.state & lib.RP_PROCESS_BLOCK:
-		block_start = rpc.block_start
-		size = rpc.block_size
-		h = hasher.hexdigest()
-		print '(%d, %d, "%s"),' % (block_start, size, h)
-		hasher = hashlib.md5()
-		assert hashes[i][0] == block_start
-		assert hashes[i][1] == size
-		assert hashes[i][2] == h
-		assert ref_block_start == block_start
-		ref_block_start += size
-		i += 1
-	if rpc.state & lib.RP_RESET:
-		assert not mf.read()
+	rc = rp_block_next(rp)
+	if (rc):
+		print 'rc', rc
 		break
+	block_size = rpc.block_size
+	# http://blogs.skicelab.com/maurizio/ctypes-and-pointer-arithmetics.html
+	block_addr = cast(rpc.block_addr, c_void_p).value
+	inbuf = cast(rpc.inbuf, c_void_p).value
+	block_start = block_addr - inbuf
+	block_end = block_start + rpc.block_size
+	block = rpc.inbuf[block_start:block_end]
+	block = ''.join(map(chr,block))
+	h = hashlib.md5(block).hexdigest() 
+	block_streampos = rpc.block_streampos
+	print '(%d, %d, "%s"),' % (block_streampos, block_size, h)
+	assert hashes[i][0] == block_streampos, hashes[i]
+	assert hashes[i][1] == block_size, hashes[i]
+	assert hashes[i][2] == h, hashes[i]
+	assert ref_block_streampos == block_streampos
+	ref_block_streampos += block_size
+	i += 1
 
 print i
 assert i == len(hashes)
-assert rpc.state & lib.RP_RESET
 
-lib.rp_free(rp)
+rp_free(rp)

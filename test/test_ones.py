@@ -9,12 +9,12 @@ window_size = 32
 min_segment_size = 1024
 avg_segment_size = 8192
 max_segment_size = 65536
-
-rp = lib.rp_init(
-		window_size, avg_segment_size, min_segment_size, max_segment_size)
-rpc = rp.contents
-
 buf_size = 512*1024
+
+rp = lib.rp_new(
+		window_size, avg_segment_size, min_segment_size,
+		max_segment_size, buf_size)
+rpc = rp.contents
 
 buf = create_string_buffer(buf_size)
 
@@ -22,34 +22,26 @@ for i in range(buf_size):
 	buf[i] = chr(1)
 # buf[0] = chr(0x01);
 
-lib.rp_reset(rp)
+lib.rp_from_buffer(rp, buf, buf_size)
+
 i = 0
-rc = lib.rp_in(rp, buf, buf_size)
-assert rc == 1
 while True:
-	if rpc.state & lib.RP_IN: 
-		rc = lib.rp_in(rp, buf, 0)
-		assert rc == 1
-	if rpc.state & lib.RP_OUT: 
-		rc = lib.rp_out(rp)
-		assert rc == 1
-	if rpc.state & lib.RP_PROCESS_FRAGMENT:
-		print rpc.inbuf_pos, rpc.inbuf_size, rpc.block_size, rpc.state
-		assert rpc.state & lib.RP_PROCESS_BLOCK, rpc.state
-		count = rpc.frag_size
-		assert count > 0
-		assert count == rpc.block_size 
-		start = rpc.frag_start
-		assert start < buf_size
-		assert start + count <= buf_size
-		print start, count, 
-		assert count == 65536
-		h = hashlib.md5(buf[start:start+count]).hexdigest() 
-		assert h == 'ae5c932ab2e19291dd20c2c4ac382428'
-		print h
-		i += 1
-	if rpc.state & lib.RP_RESET: 
+	rc = lib.rp_block_next(rp)
+	if (rc):
 		break
+	assert rpc.block_size == max_segment_size, rpc.block_size
+	# http://blogs.skicelab.com/maurizio/ctypes-and-pointer-arithmetics.html
+	block_addr = cast(rpc.block_addr, c_void_p).value
+	inbuf = cast(rpc.inbuf, c_void_p).value
+	block_start = block_addr - inbuf
+	block_end = block_start + rpc.block_size
+	print block_start, block_end
+	block = rpc.inbuf[block_start:block_end]
+	block = ''.join(map(chr,block))
+	h = hashlib.md5(block).hexdigest() 
+	print h
+	assert h == 'ae5c932ab2e19291dd20c2c4ac382428'
+	i += 1
 
 print i
 assert i == 8

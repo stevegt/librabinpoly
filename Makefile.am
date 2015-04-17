@@ -14,13 +14,11 @@ export PYTHONPATH := $(CURDIR)/python:$(PYTHONPATH)
 
 .PHONY: test 
 
-test: test/data/random-42x1M.dat test/data/pmlog.dat
+test: test/data/random-42x1M.dat test/data/pmlog.dat python/rabinpoly.py
 	test/test_load.py
 	test/test_16_32_64.py
-	test/test_reset.py
 	test/test_zeros.py
 	test/test_ones.py
-	test/test_next.py
 	test/test_hash.py
 	test/test_eof.py
 	test/test_pmlog.py
