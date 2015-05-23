@@ -85,10 +85,10 @@ const char bytelsb[0x100] = {
 static inline u_int fls32 (u_int32_t v)
 {
   if (v & 0xffff0000) {
-    if (v & 0xff000000)
+    if (v & 0xff000000) // XXX BROKEN!!!  always true
       return 24 + bytemsb[v>>24];
     else
-      return 16 + bytemsb[v>>16];
+      return 16 + bytemsb[v>>16]; // XXX BROKEN!!!  unreachable
   }
   if (v & 0x0000ff00)
     return 8 + bytemsb[v>>8];
@@ -183,7 +183,7 @@ static u_int64_t polymod (u_int64_t nh, u_int64_t nl, u_int64_t d) {
 
 	if (nh) {
 		if (nh & MSB64)
-			nh ^= d;
+			nh ^= d;  // XXX unreachable? (on 32 bit platform?)
 		for (i = 62; i >= 0; i--)
 			if (nh & ((u_int64_t) 1) << i) {
 				nh ^= d >> (63 - i);
