@@ -6,6 +6,10 @@ import hashlib
 
 from rabinpoly import *
 
+# import errno
+# python's errno module doesn't include EOF
+EOF = -1
+
 window_size = 32
 min_block_size = 1024
 avg_block_size = 8192
@@ -25,7 +29,7 @@ hasher = hashlib.md5()
 while True:
 	rc = rp_block_next(rp)
 	if (rc):
-		print 'rc', rc
+		assert rc == EOF
 		break
 	block_size = rpc.block_size
 	# http://blogs.skicelab.com/maurizio/ctypes-and-pointer-arithmetics.html

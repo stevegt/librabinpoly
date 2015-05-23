@@ -4,6 +4,10 @@
 from ctypes import *
 import hashlib
 
+# import errno
+# python's errno module doesn't include EOF
+EOF = -1
+
 from rabinpoly import *
 
 window_size = 32
@@ -163,7 +167,7 @@ hasher = hashlib.md5()
 while True:
 	rc = rp_block_next(rp)
 	if (rc):
-		print 'rc', rc
+		assert rc == EOF
 		break
 	block_size = rpc.block_size
 	# http://blogs.skicelab.com/maurizio/ctypes-and-pointer-arithmetics.html
