@@ -66,34 +66,91 @@ const char bytemsb[0x100] = {
   8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
 };
 
-/* Least set bit (ffs) */
-const char bytelsb[0x100] = {
-  0, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
-  4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
-  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 7, 1, 2, 1, 3, 1, 2, 1,
-  4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
-  6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
-  4, 1, 2, 1, 3, 1, 2, 1, 8, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
-  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1,
-  4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
-  7, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
-  4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
-  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
-};
+///* Least set bit (ffs) */
+//const char bytelsb[0x100] = {
+//  0, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
+//  4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+//  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 7, 1, 2, 1, 3, 1, 2, 1,
+//  4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+//  6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
+//  4, 1, 2, 1, 3, 1, 2, 1, 8, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+//  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1,
+//  4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+//  7, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1,
+//  4, 1, 2, 1, 3, 1, 2, 1, 6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+//  5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
+//};
+//
+///* Find last set (most significant bit) */
+//static inline u_int fls32 (u_int32_t v)
+//{
+//  if (v & 0xffff0000) {
+//    if (v & 0xff000000) // XXX BROKEN!!!  always true
+//      return 24 + bytemsb[v>>24];
+//    else
+//      return 16 + bytemsb[v>>16]; // XXX BROKEN!!!  unreachable
+//  }
+//  if (v & 0x0000ff00)
+//    return 8 + bytemsb[v>>8];
+//  else
+//    return bytemsb[v];
+//}
 
-/* Find last set (most significant bit) */
-static inline u_int fls32 (u_int32_t v)
+///* http://lwn.net/Articles/30719/  (post to linux-kernel@vger.kernel.org) */
+///* Faster generic_fls */
+///* (c) 2002, D.Phillips and Sistina Software */
+///* Licensed under Version 2 of the GPL */
+//
+//static inline unsigned fls8(unsigned n)
+//{
+//       return n & 0xf0?
+//           n & 0xc0? (n >> 7) + 7: (n >> 5) + 5:
+//           n & 0x0c? (n >> 3) + 3: n - ((n + 1) >> 2);
+//}
+//
+//static inline unsigned fls16(unsigned n)
+//{
+//       return n & 0xff00? fls8(n >> 8) + 8: fls8(n);
+//}
+//
+//static inline unsigned fls32(unsigned n)
+//{
+//       return n & 0xffff0000? fls16(n >> 16) + 16: fls16(n);
+//}
+//
+//static inline unsigned fls64(unsigned long long n) /* should be u64 */
+//{
+//       return n & 0xffffffff00000000ULL? fls32(n >> 32) + 32: fls32(n);
+//}
+
+// /usr/src/linux-headers-3.8.0-32/include/asm-generic/bitops/fls.h
+static inline u_int fls32(u_int32_t x)
 {
-  if (v & 0xffff0000) {
-    if (v & 0xff000000) // XXX BROKEN!!!  always true
-      return 24 + bytemsb[v>>24];
-    else
-      return 16 + bytemsb[v>>16]; // XXX BROKEN!!!  unreachable
-  }
-  if (v & 0x0000ff00)
-    return 8 + bytemsb[v>>8];
-  else
-    return bytemsb[v];
+	int r = 32;
+
+	if (!x)
+		return 0;
+	if (!(x & 0xffff0000u)) {
+		x <<= 16;
+		r -= 16;
+	}
+	if (!(x & 0xff000000u)) {
+		x <<= 8;
+		r -= 8;
+	}
+	if (!(x & 0xf0000000u)) {
+		x <<= 4;
+		r -= 4;
+	}
+	if (!(x & 0xc0000000u)) {
+		x <<= 2;
+		r -= 2;
+	}
+	if (!(x & 0x80000000u)) {
+		x <<= 1;
+		r -= 1;
+	}
+	return r;
 }
 
 //static inline u_int fls64 (u_int64_t) __attribute__ ((const));
@@ -105,6 +162,7 @@ static inline char fls64 (u_int64_t v)
   else
     return fls32 ((u_int32_t) v);
 }
+
 
 // static inline int log2c64 (u_int64_t) __attribute__ ((const));
 // static inline int
@@ -156,6 +214,8 @@ static inline char fls64 (u_int64_t v)
 
 #define INT64(n) n##LL
 #define MSB64 INT64(0x8000000000000000)
+// XXX should this instead be simply this version from D.Phillips?
+// #define MSB64 0x8000000000000000ULL
 
 #define DEFAULT_WINDOW_SIZE 32
 
