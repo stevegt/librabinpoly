@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+dir=$1
+
+export LD_LIBRARY_PATH=src/.libs/
+
+hash_cmd="examples/.libs/hash_md5 32 1024 8192 65536 655360"
+
+find $dir -xdev -type f -print0 | xargs -0 -IX sh -c "$hash_cmd < X"
+

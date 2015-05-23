@@ -1,0 +1,11 @@
+#!/usr/bin/python
+
+import random
+import sys
+
+minexpr=sys.argv[1]
+maxexpr=sys.argv[2]
+
+print random.randint(eval(minexpr), eval(maxexpr))
+
+

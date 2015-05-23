@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <rabinpoly.h>
 // #include <crypto.h>
 #include <openssl/md5.h>
@@ -18,16 +19,23 @@ int main(int argc, char **argv){
 		printf("argv[%d] %s\n", i, argv[i]);
 	}
 
-	unsigned int window_size = 32;
-	size_t min_block_size = 1024;
-	size_t avg_block_size = 8192;
-	size_t max_block_size = 65536;
-	size_t buf_size = max_block_size * 10;
+	// unsigned int window_size = 32;
+	// size_t min_block_size = 1024;
+	// size_t avg_block_size = 8192;
+	// size_t max_block_size = 65536;
+	// size_t buf_size = max_block_size * 10;
+
+	unsigned int window_size = atoi(argv[1]);
+	size_t min_block_size = atoi(argv[2]);
+	size_t avg_block_size = atoi(argv[3]);
+	size_t max_block_size = atoi(argv[4]);
+	size_t buf_size = atoi(argv[5]);
 
 	RabinPoly *rp;
    
 	rp = rp_new(window_size, 
             avg_block_size, min_block_size, max_block_size, buf_size);
+	assert(rp);
 	rp_from_stream(rp, stdin);
 
     for (;;) {

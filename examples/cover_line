@@ -1,0 +1,30 @@
+#!/bin/bash -ex
+
+line=$1
+
+export LD_LIBRARY_PATH=src/.libs/
+randint=examples/randint
+
+while true
+do
+	find -name '*.gcda' -o -name '*.gcov' | xargs rm || true
+	win=$($randint 32 2**16)
+	min=$($randint $win 2**18)
+	avg=$($randint $min 2**20)
+	max=$($randint $avg 2**22)
+	buf=$($randint $max*2 2**24)
+	dd if=/dev/urandom bs=1k count=$($randint 0 "($buf*3)/1024") of=/tmp/$$
+	dd if=/dev/urandom bs=1 count=$($randint 0 1024) oflag=append conv=notrunc of=/tmp/$$
+	ls -l /tmp/$$
+	hash_cmd="examples/.libs/hash_md5 $win $min $avg $max $buf"
+	echo $hash_cmd
+	$hash_cmd < /tmp/$$ > /tmp/$$.out
+	cd src
+	gcov -o ../$LD_LIBRARY_PATH rabinpoly.c 
+	grep " $line:" rabinpoly.c.gcov | grep '###' || break
+	cd -
+done
+
+echo /tmp/$$ covers line $line
+
+

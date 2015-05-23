@@ -26,13 +26,16 @@ test: test/data/random-42x1M.dat test/data/pmlog.dat python/rabinpoly.py
 coverage: 
 	@echo run this:
 	@echo make clean
+	@echo "find -name '*.gcda' -o -name '*.gcno' -o -name '*.gcov' | xargs rm"
 	@echo './configure CFLAGS="--coverage -O0" LDFLAGS="--coverage"'
 	@echo make
 	@echo make test
-	@echo cd src; gcov -o .libs/ rabinpoly.c
+	@echo make examples
+	@echo cd src 
+	@echo gcov -o .libs/ rabinpoly.c
 	@echo view rabinpoly.c.gcov
 	@echo ...
-	@echo make examples
+	@echo cd ..
 	@echo examples/cover_line NNN
 
 
