@@ -23,6 +23,18 @@ test: test/data/random-42x1M.dat test/data/pmlog.dat python/rabinpoly.py
 	test/test_eof.py
 	test/test_pmlog.py
 
+coverage: 
+	@echo run this:
+	@echo make clean
+	@echo './configure CFLAGS="--coverage -O0" LDFLAGS="--coverage"'
+	@echo make
+	@echo make test
+	@echo cd src; gcov -o .libs/ rabinpoly.c
+	@echo view rabinpoly.c.gcov
+	@echo ...
+	@echo make examples
+	@echo examples/cover_line NNN
+
 
 $(BENCHFN): 
 	dd if=/dev/urandom of=$(BENCHFN) bs=1M count=10
