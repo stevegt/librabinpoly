@@ -133,5 +133,5 @@ AZ Huang converted Joel's version to a Python module:
 https://github.com/aitjcize/pyrabin. I've forked and contributed to
 AZ's version at https://github.com/stevegt/pyrabin.
 
-There is a succinct description of Rabin's algorithm in Bill Dwyer's
-Java implementation:  https://github.com/themadcreator/rabinfingerprint/blob/master/src/main/java/org/rabinfingerprint/fingerprint/RabinFingerprintPolynomial.java
+There is a description of Rabin's algorithm in Bill Dwyer's various
+Java implementations:  https://github.com/themadcreator/rabinfingerprint/blob/master/src/main/java/org/rabinfingerprint/fingerprint/
